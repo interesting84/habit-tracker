@@ -13,7 +13,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="container flex h-[calc(100vh-4rem)] flex-col items-center justify-center">
+    <div className="fixed inset-0 flex items-center justify-center">
       <div className="mx-auto flex max-w-2xl flex-col items-center space-y-4 text-center">
         <h1 className="text-4xl font-bold">Welcome to HabitQuest</h1>
         <p className="text-xl text-muted-foreground">
