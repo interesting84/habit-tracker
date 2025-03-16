@@ -10,8 +10,8 @@ export default async function SignInPage() {
   }
 
   return (
-    <div className="container mx-auto flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-8">
+    <main className="h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
           <h1 className="text-4xl font-bold">Welcome Back</h1>
           <p className="mt-2 text-muted-foreground">
@@ -20,6 +20,6 @@ export default async function SignInPage() {
         </div>
         <SignInForm />
       </div>
-    </div>
+    </main>
   );
 } 
