@@ -11,6 +11,20 @@ export default async function DashboardPage() {
     redirect("/signin");
   }
 
+  // Fetch fresh user data
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      name: true,
+      level: true,
+      xp: true,
+    },
+  });
+
+  if (!user) {
+    redirect("/signin");
+  }
+
   const habits = await prisma.habit.findMany({
     where: {
       userId: session.user.id,
@@ -24,7 +38,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Welcome back, {session.user.name || "Adventurer"}!</h1>
+        <h1 className="text-3xl font-bold">Welcome back, {user.name || "Adventurer"}!</h1>
         <p className="text-muted-foreground">
           Track your habits and level up your life
         </p>
@@ -32,12 +46,12 @@ export default async function DashboardPage() {
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-lg border p-4">
-          <h2 className="font-semibold">Level {session.user.level}</h2>
+          <h2 className="font-semibold">Level {user.level}</h2>
           <p className="text-sm text-muted-foreground">Keep going to level up!</p>
         </div>
         
         <div className="rounded-lg border p-4">
-          <h2 className="font-semibold">XP: {session.user.xp}</h2>
+          <h2 className="font-semibold">XP: {user.xp}</h2>
           <p className="text-sm text-muted-foreground">Complete habits to earn XP</p>
         </div>
         
