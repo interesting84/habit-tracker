@@ -12,5 +12,6 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     level: number;
     xp: number;
+    password?: string;
   }
 } 
