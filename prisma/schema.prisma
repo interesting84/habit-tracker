@@ -57,6 +57,7 @@ model User {
   habits          Habit[]
   habitCompletions HabitCompletion[]
   userBadges      UserBadge[]
+  challenges      Challenge[]
 }
 
 model Habit {
@@ -113,4 +114,24 @@ model UserBadge {
   @@unique([userId, badgeId])
   @@index([userId])
   @@index([badgeId])
+}
+
+model Challenge {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  xpReward    Int
+  difficulty  String    // easy, medium, hard
+  duration    Int      // in days
+  userId      String
+  status      String    // active, completed, failed
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  aiGenerated Boolean   @default(false)
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

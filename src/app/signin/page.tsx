@@ -1,13 +1,21 @@
-import { SignInForm } from "@/components/auth/SignInForm";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import SignInForm from "@/components/SignInForm";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await getServerSession();
+
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your email to sign in to your account
+    <div className="container mx-auto flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold">Welcome Back</h1>
+          <p className="mt-2 text-muted-foreground">
+            Sign in to continue your productivity journey
           </p>
         </div>
         <SignInForm />
