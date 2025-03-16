@@ -1,5 +1,5 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,34 @@ import ChallengeList from "@/components/ChallengeList";
 import { HabitList } from "@/components/habits/HabitList";
 import UserStats from "@/components/UserStats";
 import NewChallengeButton from "@/components/NewChallengeButton";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        </div>
+      </Card>
+      
+      <div className="grid gap-4">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default async function DashboardPage() {
   const session = await getServerSession();
@@ -47,49 +75,51 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 col-span-full">
-          <UserStats user={user} />
-          <div className="mt-4 space-y-2">
-            <div className="flex justify-between">
-              <span>Level {user.level}</span>
-              <span>{user.xp}/{xpToNextLevel} XP</span>
-            </div>
-            <Progress value={progress} />
-          </div>
-        </Card>
-
-        <div className="md:col-span-2 space-y-6">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Active Challenges</h2>
-            <ChallengeList challenges={user.challenges} />
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Daily Habits</h2>
-            <HabitList habits={user.habits} />
-          </section>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {user.userBadges.map((userBadge: { id: string; badge: { imageUrl: string; name: string } }) => (
-                <div
-                  key={userBadge.id}
-                  className="flex flex-col items-center text-center"
-                >
-                  <img
-                    src={userBadge.badge.imageUrl}
-                    alt={userBadge.badge.name}
-                    className="w-12 h-12 mb-2"
-                  />
-                  <span className="text-sm">{userBadge.badge.name}</span>
-                </div>
-              ))}
+        <Suspense fallback={<DashboardSkeleton />}>
+          <Card className="p-6 col-span-full">
+            <UserStats user={user} />
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between">
+                <span>Level {user.level}</span>
+                <span>{user.xp}/{xpToNextLevel} XP</span>
+              </div>
+              <Progress value={progress} />
             </div>
           </Card>
-        </div>
+
+          <div className="md:col-span-2 space-y-6">
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">Active Challenges</h2>
+              <ChallengeList challenges={user.challenges} />
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">Daily Habits</h2>
+              <HabitList habits={user.habits} />
+            </section>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
+              <div className="grid grid-cols-3 gap-4">
+                {user.userBadges.map((userBadge) => (
+                  <div
+                    key={userBadge.id}
+                    className="flex flex-col items-center text-center"
+                  >
+                    <img
+                      src={userBadge.badge.imageUrl}
+                      alt={userBadge.badge.name}
+                      className="w-12 h-12 mb-2"
+                    />
+                    <span className="text-sm">{userBadge.badge.name}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </Suspense>
       </div>
     </div>
   );

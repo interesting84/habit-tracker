@@ -2,6 +2,21 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { NewHabitForm } from "@/components/habits/NewHabitForm";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function NewHabitFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+}
 
 export default async function NewHabitPage() {
   const session = await getServerSession(authOptions);
@@ -19,7 +34,9 @@ export default async function NewHabitPage() {
         </p>
       </div>
 
-      <NewHabitForm userId={session.user.id} />
+      <Suspense fallback={<NewHabitFormSkeleton />}>
+        <NewHabitForm userId={session.user.id} />
+      </Suspense>
     </div>
   );
 } 

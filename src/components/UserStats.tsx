@@ -6,6 +6,8 @@ interface User {
   email: string | null;
   level: number;
   xp: number;
+  habits: Habit[];
+  challenges: Challenge[];
 }
 
 interface Habit {
@@ -13,7 +15,11 @@ interface Habit {
   name: string;
   isArchived: boolean;
   completions: {
-    date: string;
+    id: string;
+    userId: string;
+    habitId: string;
+    completedAt: Date;
+    xpEarned: number;
   }[];
 }
 
@@ -33,11 +39,7 @@ interface UserBadge {
 }
 
 interface UserStatsProps {
-  user: User & {
-    habits: Habit[];
-    challenges: Challenge[];
-    userBadges: UserBadge[];
-  };
+  user: User;
 }
 
 export default function UserStats({ user }: UserStatsProps) {
@@ -75,7 +77,7 @@ function calculateStreak(habits: Habit[]): number {
 
   // Get all completion dates and sort them in descending order
   const completionDates = habits
-    .flatMap(habit => habit.completions.map(completion => new Date(completion.date)))
+    .flatMap(habit => habit.completions.map(completion => new Date(completion.completedAt)))
     .sort((a, b) => b.getTime() - a.getTime());
 
   if (!completionDates.length) return 0;

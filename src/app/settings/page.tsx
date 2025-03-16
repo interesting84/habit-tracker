@@ -2,6 +2,23 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import SettingsForm from "@/components/settings/SettingsForm";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function SettingsFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  );
+}
 
 export default async function SettingsPage() {
   const session = await getServerSession();
@@ -32,7 +49,9 @@ export default async function SettingsPage() {
             Manage your account settings and preferences
           </p>
         </div>
-        <SettingsForm user={user} />
+        <Suspense fallback={<SettingsFormSkeleton />}>
+          <SettingsForm user={user} />
+        </Suspense>
       </div>
     </main>
   );

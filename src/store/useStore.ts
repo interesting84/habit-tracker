@@ -16,21 +16,21 @@ interface HabitCompletion {
   xpEarned: number
 }
 
-interface User {
-  id: string
-  name: string
-  email: string
-  level: number
-  xp: number
-  image?: string
-}
-
 interface Badge {
   id: string
   name: string
   description: string
   imageUrl: string
-  earnedAt: Date
+  criteria: string
+}
+
+interface User {
+  id: string
+  name: string | null
+  email: string | null
+  level: number
+  xp: number
+  lastUpdated?: number
 }
 
 interface AppState {
@@ -49,17 +49,21 @@ interface AppState {
   deleteHabit: (habitId: string) => void
   completeHabit: (habitId: string, completion: HabitCompletion) => void
   addBadge: (badge: Badge) => void
+  updateUserData: (updates: Partial<User>) => void
+  shouldRefreshUser: () => boolean
 }
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       habits: [],
       badges: [],
       isLoading: false,
       theme: 'light',
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user: user ? { ...user, lastUpdated: Date.now() } : null }),
       setHabits: (habits) => set({ habits }),
       setBadges: (badges) => set({ badges }),
       setIsLoading: (isLoading) => set({ isLoading }),
@@ -85,6 +89,15 @@ const useStore = create<AppState>()(
         })),
       addBadge: (badge) =>
         set((state) => ({ badges: [...state.badges, badge] })),
+      updateUserData: (updates) => 
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates, lastUpdated: Date.now() } : null
+        })),
+      shouldRefreshUser: () => {
+        const user = get().user;
+        if (!user || !user.lastUpdated) return true;
+        return Date.now() - user.lastUpdated > CACHE_DURATION;
+      }
     }),
     {
       name: 'habit-quest-storage',

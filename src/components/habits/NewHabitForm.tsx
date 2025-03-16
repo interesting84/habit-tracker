@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function NewHabitForm({ userId }: { userId: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [frequency, setFrequency] = useState<string>("daily");
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -16,7 +24,6 @@ export function NewHabitForm({ userId }: { userId: string }) {
     const formData = new FormData(event.currentTarget);
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
-    const frequency = formData.get("frequency") as string;
 
     try {
       const response = await fetch("/api/habits", {
@@ -63,7 +70,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
             type="text"
             required
             placeholder="e.g., Morning Exercise"
-            className="mt-1 block w-full rounded-md border p-2"
+            className="mt-1 block w-full rounded-md border p-2 bg-background"
             disabled={isLoading}
           />
         </div>
@@ -77,7 +84,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
             name="description"
             rows={3}
             placeholder="e.g., 30 minutes of exercise every morning"
-            className="mt-1 block w-full rounded-md border p-2"
+            className="mt-1 block w-full rounded-md border p-2 bg-background"
             disabled={isLoading}
           />
         </div>
@@ -86,17 +93,20 @@ export function NewHabitForm({ userId }: { userId: string }) {
           <label htmlFor="frequency" className="block text-sm font-medium">
             Frequency
           </label>
-          <select
-            id="frequency"
-            name="frequency"
-            required
-            className="mt-1 block w-full rounded-md border p-2"
+          <Select
+            value={frequency}
+            onValueChange={setFrequency}
             disabled={isLoading}
           >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select frequency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {error && (
