@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useTheme } from "next-themes"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -11,11 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sun, Moon, User } from "lucide-react"
-import useStore from "@/store/useStore"
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
-  const user = useStore((state) => state.user)
+  const { data: session } = useSession()
 
   return (
     <nav className="border-b">
@@ -37,13 +37,13 @@ export default function Navbar() {
             )}
           </Button>
 
-          {user ? (
+          {session?.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image} alt={user.name} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                    <AvatarImage src={session.user.image || undefined} alt={session.user.name || ''} />
+                    <AvatarFallback>{session.user.name?.[0]}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -54,8 +54,8 @@ export default function Navbar() {
                 <DropdownMenuItem>
                   <Link href="/settings">Settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/api/auth/signout">Sign out</Link>
+                <DropdownMenuItem onSelect={() => signOut({ callbackUrl: '/' })}>
+                  Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
