@@ -88,109 +88,114 @@ function getTimeUntilNextCompletion(habit: Habit): string | null {
   return null;
 }
 
-export function HabitList({ habits }: { habits: Habit[] }) {
+export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isViewOnly?: boolean }) {
   const router = useRouter();
-  const [completingHabitId, setCompletingHabitId] = useState<string | null>(null);
+  const [completingHabit, setCompletingHabit] = useState<string | null>(null);
 
   async function completeHabit(habitId: string, habitName: string) {
-    setCompletingHabitId(habitId);
+    if (isViewOnly) return;
+    
     try {
+      setCompletingHabit(habitId);
       const response = await fetch(`/api/habits/${habitId}/complete`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.message || "Failed to complete habit");
+        throw new Error();
       }
 
-      toast.success(`${habitName} completed! +${data.completion.xpEarned}XP 🌟`);
+      toast.success(`Completed ${habitName}!`);
       router.refresh();
     } catch (error) {
-      console.error("Error completing habit:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to complete habit");
+      toast.error("Failed to complete habit");
     } finally {
-      setCompletingHabitId(null);
+      setCompletingHabit(null);
     }
   }
 
   if (habits.length === 0) {
     return (
       <div className="text-center p-4 bg-secondary/50 rounded-lg">
-        <p className="text-muted-foreground">No habits yet. Create one to get started!</p>
-        <Link
-          href="/habits/new"
-          className="inline-flex items-center mt-2 text-sm text-primary hover:underline"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Create Habit
-        </Link>
+        <p className="text-muted-foreground">No habits yet{isViewOnly ? "." : ". Create one to get started!"}</p>
+        {!isViewOnly && (
+          <Link
+            href="/habits/new"
+            className="inline-flex items-center mt-2 text-sm text-primary hover:underline"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Create Habit
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        {habits.map((habit) => {
-          const timeUntilNext = getTimeUntilNextCompletion(habit);
-          const isOnCooldown = timeUntilNext !== null;
+      {habits.map((habit) => {
+        const timeUntilNext = getTimeUntilNextCompletion(habit);
+        const isCompleted = timeUntilNext !== null;
+        const isLoading = completingHabit === habit.id;
 
-          return (
-            <div
-              key={habit.id}
-              className="flex items-center justify-between rounded-lg border overflow-hidden"
-            >
-              <div className={cn("w-1 self-stretch", difficultyColors[habit.difficulty as keyof typeof difficultyColors])} />
-              <div className="flex-1 flex items-center justify-between p-4">
-                <div>
-                  <h3 className="font-medium">{habit.name}</h3>
+        return (
+          <div
+            key={habit.id}
+            className="flex overflow-hidden rounded-lg border"
+          >
+            <div className={cn("w-1 flex-shrink-0", difficultyColors[habit.difficulty as keyof typeof difficultyColors])} />
+            <div className={cn(
+              "flex-1 p-4",
+              isCompleted && "bg-muted/50"
+            )}>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{habit.name}</h3>
+                    {!isViewOnly && (
+                      <Link
+                        href={`/habits/${habit.id}/edit`}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
                   {habit.description && (
                     <p className="text-sm text-muted-foreground">
                       {habit.description}
                     </p>
                   )}
-                  <div className="flex flex-col gap-1 mt-1">
-                    <p className="text-xs text-muted-foreground">
-                      Frequency: {formatFrequency(habit.frequency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Difficulty: {habit.difficulty}
-                    </p>
-                    {isOnCooldown && (
-                      <p className="text-xs text-yellow-600">
-                        {timeUntilNext}
-                      </p>
-                    )}
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {formatFrequency(habit.frequency)}
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/habits/${habit.id}/edit`}
-                    className="rounded-md bg-secondary p-2 text-foreground hover:bg-secondary/90 transition-colors"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
+                {!isViewOnly && (
                   <button
-                    className={cn(
-                      "rounded-md px-4 py-2 text-sm font-medium text-white transition-colors",
-                      isOnCooldown
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-emerald-600 hover:bg-emerald-700"
-                    )}
                     onClick={() => completeHabit(habit.id, habit.name)}
-                    disabled={isOnCooldown || completingHabitId === habit.id}
-                    title={isOnCooldown ? timeUntilNext : "Complete habit"}
+                    disabled={isLoading || isCompleted}
+                    className={cn(
+                      "px-4 py-1 rounded-md text-sm font-medium transition-colors",
+                      !isCompleted && !isLoading && "bg-green-500 hover:bg-green-600 text-white",
+                      (isCompleted || isLoading) && "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    )}
                   >
-                    {completingHabitId === habit.id ? "..." : "Complete"}
+                    {isLoading ? "..." : "Complete"}
                   </button>
-                </div>
+                )}
               </div>
+              {isCompleted && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Next completion available {timeUntilNext}
+                </p>
+              )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 } 

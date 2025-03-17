@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Select,
   SelectContent,
@@ -35,10 +36,12 @@ interface Habit {
   description: string | null;
   frequency: Frequency;
   difficulty: string;
+  userId: string;
 }
 
 export function EditHabitForm({ habit }: { habit: Habit }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [difficulty, setDifficulty] = useState<string>(habit.difficulty);
@@ -97,7 +100,7 @@ export function EditHabitForm({ habit }: { habit: Habit }) {
         throw new Error(data.message || "Failed to update habit");
       }
 
-      router.push("/dashboard");
+      router.push(`/profile/${session?.user?.name || session?.user?.email}`);
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {

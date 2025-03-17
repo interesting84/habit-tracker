@@ -9,30 +9,9 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DailyQuote from "@/components/DailyQuote";
 import { getLevelProgress, getXPDisplayString, calculateLevel } from "@/lib/xp";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "../../api/auth/[...nextauth]/route";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-
-interface HabitCompletion {
-  id: string;
-  userId: string;
-  habitId: string;
-  completedAt: Date;
-  xpEarned: number;
-}
-
-interface DBHabit {
-  id: string;
-  name: string;
-  description: string | null;
-  frequency: string;
-  difficulty: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isArchived: boolean;
-  completions: HabitCompletion[];
-}
 
 interface Frequency {
   type: "interval" | "weekdays";
@@ -40,51 +19,25 @@ interface Frequency {
   unit?: "hours" | "days";
 }
 
-interface ParsedHabit extends Omit<DBHabit, 'frequency'> {
-  frequency: Frequency;
-}
-
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  xpReward: number;
-  difficulty: string;
-  duration: number;
-  userId: string;
-  startDate: Date;
-  endDate: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  aiGenerated: boolean;
-  lastCompletedAt: Date | null;
-}
-
-interface Badge {
+type Habit = {
   id: string;
   name: string;
-  description: string;
-  imageUrl: string;
+  description: string | null;
+  frequency: Frequency;
+  difficulty: string;
+  completions: {
+    id: string;
+    completedAt: Date;
+  }[];
+};
+
+interface PageProps {
+  params: Promise<{
+    username: string;
+  }>;
 }
 
-interface UserBadge {
-  id: string;
-  badge: Badge;
-}
-
-interface User {
-  id: string;
-  name: string | null;
-  email: string | null;
-  level: number;
-  xp: number;
-  habits: ParsedHabit[];
-  challenges: Challenge[];
-  userBadges: UserBadge[];
-}
-
-function DashboardSkeleton() {
+function ProfileSkeleton() {
   return (
     <div className="space-y-8">
       <Card className="p-6">
@@ -110,15 +63,18 @@ function DashboardSkeleton() {
   );
 }
 
-export default async function DashboardPage() {
+export default async function ProfilePage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+  const { username } = await params;
   
-  if (!session?.user) {
-    redirect("/signin");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email ?? "" },
+  // Find the profile user by username (which could be email or name)
+  const profileUser = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: username },
+        { name: username }
+      ]
+    },
     include: {
       habits: {
         where: { isArchived: false },
@@ -133,47 +89,62 @@ export default async function DashboardPage() {
         include: { badge: true },
       },
     },
-  }) as User | null;
+  });
 
-  if (!user) {
-    redirect("/signin");
+  if (!profileUser) {
+    redirect("/404");
   }
 
   // Parse frequency JSON for each habit
-  const parsedHabits = user.habits.map(habit => ({
-    ...habit,
-    frequency: typeof habit.frequency === 'string' 
-      ? JSON.parse(habit.frequency as string)
-      : habit.frequency
-  })) as ParsedHabit[];
-  user.habits = parsedHabits;
+  const parsedHabits = profileUser.habits.map(habit => {
+    const parsed = {
+      ...habit,
+      frequency: typeof habit.frequency === 'string' 
+        ? JSON.parse(habit.frequency) as unknown as Frequency
+        : habit.frequency as unknown as Frequency,
+      completions: habit.completions || []
+    };
+    return parsed;
+  });
 
-  const calculatedLevel = calculateLevel(user.xp);
+  const safeProfileUser = {
+    ...profileUser,
+    habits: parsedHabits,
+    xp: profileUser.xp || 0,
+    level: profileUser.level || 1
+  };
+
+  const calculatedLevel = calculateLevel(safeProfileUser.xp);
   // Update user's level if it doesn't match their XP
-  if (calculatedLevel !== user.level) {
+  if (calculatedLevel !== safeProfileUser.level) {
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: safeProfileUser.id },
       data: { level: calculatedLevel }
     });
-    user.level = calculatedLevel;
+    safeProfileUser.level = calculatedLevel;
   }
 
-  const progress = getLevelProgress(user.xp);
-  const xpDisplay = getXPDisplayString(user.xp);
+  const progress = getLevelProgress(safeProfileUser.xp);
+  const xpDisplay = getXPDisplayString(safeProfileUser.xp);
+  
+  // Check if the current user is viewing their own profile
+  const isOwnProfile = session?.user?.email === safeProfileUser.email;
 
   return (
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold">Dashboard</h1>
+        <h1 className="text-4xl font-bold">
+          {safeProfileUser.name || safeProfileUser.email}'s Profile
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Suspense fallback={<DashboardSkeleton />}>
+        <Suspense fallback={<ProfileSkeleton />}>
           <Card className="p-6 col-span-full">
-            <UserStats user={user} />
+            <UserStats user={safeProfileUser} isViewOnly={!isOwnProfile} />
             <div className="mt-4 space-y-2">
               <div className="flex justify-between">
-                <span>Level {user.level}</span>
+                <span>Level {safeProfileUser.level}</span>
                 <span>{xpDisplay}</span>
               </div>
               <Progress value={progress} />
@@ -184,24 +155,26 @@ export default async function DashboardPage() {
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Daily Habits</h2>
-                <Link
-                  href="/habits/new"
-                  className="inline-flex items-center text-sm text-primary hover:underline"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Create Habit
-                </Link>
+                {isOwnProfile && (
+                  <Link
+                    href="/habits/new"
+                    className="inline-flex items-center text-sm text-primary hover:underline"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Create Habit
+                  </Link>
+                )}
               </div>
-              <HabitList habits={user.habits} />
+              <HabitList habits={safeProfileUser.habits} isViewOnly={!isOwnProfile} />
             </section>
           </div>
 
           <div className="space-y-6">
-            <DailyQuote />
+            {isOwnProfile && <DailyQuote />}
             <Card className="p-6">
               <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
               <div className="grid grid-cols-3 gap-4">
-                {user.userBadges.map((userBadge) => (
+                {safeProfileUser.userBadges.map((userBadge) => (
                   <div
                     key={userBadge.id}
                     className="flex flex-col items-center text-center"

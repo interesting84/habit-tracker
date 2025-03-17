@@ -32,7 +32,11 @@ export default function SignInForm() {
         return;
       }
 
-      router.push("/dashboard");
+      // Get the user's profile info
+      const response = await fetch("/api/me");
+      const user = await response.json();
+      
+      router.push(`/profile/${user.name || user.email}`);
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong");

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -14,22 +15,31 @@ import { User, Trophy } from "lucide-react"
 
 export default function Navbar() {
   const { data: session } = useSession()
+  const router = useRouter()
+
+  const handleNavigate = (path: string) => {
+    // Clean up any pending state before navigation
+    router.push(path)
+  }
 
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-2xl font-bold">
+          <button 
+            onClick={() => handleNavigate("/")}
+            className="text-2xl font-bold hover:opacity-80"
+          >
             HabitQuest
-          </Link>
+          </button>
           {session?.user && (
-            <Link
-              href="/leaderboard"
+            <button
+              onClick={() => handleNavigate("/leaderboard")}
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <Trophy className="h-4 w-4" />
               Leaderboard
-            </Link>
+            </button>
           )}
         </div>
 
@@ -45,6 +55,11 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem asChild>
+                  <Link href={`/profile/${session.user.name || session.user.email}`}>
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()}>
                   Sign out
                 </DropdownMenuItem>

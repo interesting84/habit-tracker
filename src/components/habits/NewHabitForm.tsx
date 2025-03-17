@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ const PRESET_FREQUENCIES = {
 
 export function NewHabitForm({ userId }: { userId: string }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [difficulty, setDifficulty] = useState<string>("easy");
@@ -67,7 +69,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
         throw new Error(data.message || "Failed to create habit");
       }
 
-      router.push("/dashboard");
+      router.push(`/profile/${session?.user?.name || session?.user?.email}`);
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {

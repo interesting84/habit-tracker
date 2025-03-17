@@ -39,7 +39,13 @@ export default function SignUpForm() {
       }
 
       toast.success("Account created successfully!");
-      router.push("/signin");
+
+      // Get the user's profile info
+      const userResponse = await fetch("/api/me");
+      const user = await userResponse.json();
+      
+      router.push(`/profile/${user.name || user.email}`);
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {

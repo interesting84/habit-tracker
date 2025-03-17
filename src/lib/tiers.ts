@@ -26,6 +26,14 @@ export function getNextTierLevel(currentLevel: number): number | null {
   return null; // Already at highest tier
 }
 
+export function getTotalXPForLevel(targetLevel: number): number {
+  let total = 0;
+  for (let l = 1; l < targetLevel; l++) {
+    total += getXPRequiredForLevel(l);
+  }
+  return total;
+}
+
 export function getTierProgress(level: number, totalXP: number): number {
   const nextTierLevel = getNextTierLevel(level);
   if (!nextTierLevel) return 100; // Already at max tier
@@ -37,33 +45,28 @@ export function getTierProgress(level: number, totalXP: number): number {
   else if (level < 30) currentTierMinLevel = 20;
   else currentTierMinLevel = 30;
 
-  // Calculate base progress through levels
-  const levelRange = nextTierLevel - currentTierMinLevel;
-  const levelsCompleted = level - currentTierMinLevel;
+  // Calculate total XP needed for tier boundaries
+  const nextTierTotalXP = getTotalXPForLevel(nextTierLevel);
+  const currentTierTotalXP = getTotalXPForLevel(currentTierMinLevel);
   
-  // Add fractional progress through current level
-  const currentLevelXP = getCurrentLevelXP(totalXP);
-  const requiredXP = getXPRequiredForLevel(level);
-  const levelProgress = currentLevelXP / requiredXP;
-  
-  // Combine whole levels completed with progress through current level
-  const totalProgress = (levelsCompleted + levelProgress) / levelRange;
+  // Calculate progress
+  const xpNeededForTier = nextTierTotalXP - currentTierTotalXP;
+  const currentProgress = totalXP - currentTierTotalXP;
   
   console.log('Tier Progress Debug:', {
     level,
     totalXP,
     currentTierMinLevel,
     nextTierLevel,
-    levelRange,
-    levelsCompleted,
-    currentLevelXP,
-    requiredXP,
-    levelProgress,
-    totalProgress,
-    percentage: totalProgress * 100
+    currentTierTotalXP,
+    nextTierTotalXP,
+    xpNeededForTier,
+    currentProgress,
+    percentage: (currentProgress / xpNeededForTier) * 100
   });
 
-  return Math.min(100, Math.max(0, totalProgress * 100));
+  const percentage = (currentProgress / xpNeededForTier) * 100;
+  return Math.min(100, Math.max(0, percentage));
 }
 
 interface TierColors {
