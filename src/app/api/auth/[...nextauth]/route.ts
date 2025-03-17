@@ -40,6 +40,9 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          image: user.image,
+          level: user.level,
+          xp: user.xp,
         };
       }
     })
@@ -51,9 +54,23 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
   },
   callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        return { ...token, ...session.user };
+      }
+      
+      if (user) {
+        token.id = user.id;
+        token.level = user.level;
+        token.xp = user.xp;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub!;
+        session.user.id = token.id as string;
+        session.user.level = token.level as number;
+        session.user.xp = token.xp as number;
       }
       return session;
     }

@@ -1,15 +1,14 @@
 import { Inter } from "next/font/google";
-import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 import Navbar from "@/components/navbar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Habit Tracker",
-  description: "Level up your life by building better habits",
+  title: "HabitQuest",
+  description: "Level up your life with gamified habit tracking",
 };
 
 export default function RootLayout({
@@ -21,16 +20,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Navbar />
-            {children}
-            <Toaster />
-          </ThemeProvider>
+          <Navbar />
+          {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

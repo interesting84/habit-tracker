@@ -23,15 +23,46 @@ const PRESET_FREQUENCIES = {
   weekdays: { type: "weekdays" },
 } as const;
 
-export function NewHabitForm({ userId }: { userId: string }) {
+interface Frequency {
+  type: "interval" | "weekdays";
+  value?: number;
+  unit?: "hours" | "days";
+}
+
+interface Habit {
+  id: string;
+  name: string;
+  description: string | null;
+  frequency: Frequency;
+  difficulty: string;
+}
+
+export function EditHabitForm({ habit }: { habit: Habit }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [difficulty, setDifficulty] = useState<string>("easy");
-  const [frequencyType, setFrequencyType] = useState<"preset" | "custom">("preset");
-  const [selectedPreset, setSelectedPreset] = useState<keyof typeof PRESET_FREQUENCIES>("daily");
-  const [customValue, setCustomValue] = useState<number>(1);
-  const [customUnit, setCustomUnit] = useState<"hours" | "days">("days");
+  const [difficulty, setDifficulty] = useState<string>(habit.difficulty);
+  const [frequencyType, setFrequencyType] = useState<"preset" | "custom">(
+    habit.frequency.type === "weekdays" || 
+    (habit.frequency.value === 1 && habit.frequency.unit === "hours") ||
+    (habit.frequency.value === 24 && habit.frequency.unit === "hours") ||
+    (habit.frequency.value === 48 && habit.frequency.unit === "hours")
+      ? "preset"
+      : "custom"
+  );
+  const [selectedPreset, setSelectedPreset] = useState<keyof typeof PRESET_FREQUENCIES>(() => {
+    if (habit.frequency.type === "weekdays") return "weekdays";
+    if (habit.frequency.value === 1 && habit.frequency.unit === "hours") return "hourly";
+    if (habit.frequency.value === 24 && habit.frequency.unit === "hours") return "daily";
+    if (habit.frequency.value === 48 && habit.frequency.unit === "hours") return "every-other-day";
+    return "daily";
+  });
+  const [customValue, setCustomValue] = useState<number>(
+    habit.frequency.type === "interval" ? habit.frequency.value || 1 : 1
+  );
+  const [customUnit, setCustomUnit] = useState<"hours" | "days">(
+    habit.frequency.type === "interval" ? habit.frequency.unit || "days" : "days"
+  );
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,8 +79,8 @@ export function NewHabitForm({ userId }: { userId: string }) {
       : { type: "interval", value: customValue, unit: customUnit };
 
     try {
-      const response = await fetch("/api/habits", {
-        method: "POST",
+      const response = await fetch(`/api/habits/${habit.id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -58,13 +89,12 @@ export function NewHabitForm({ userId }: { userId: string }) {
           description,
           frequency,
           difficulty,
-          userId,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Failed to create habit");
+        throw new Error(data.message || "Failed to update habit");
       }
 
       router.push("/dashboard");
@@ -73,7 +103,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("An error occurred while creating the habit");
+        setError("An error occurred while updating the habit");
       }
     } finally {
       setIsLoading(false);
@@ -92,7 +122,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
             name="name"
             type="text"
             required
-            placeholder="e.g., Morning Exercise"
+            defaultValue={habit.name}
             className="mt-1 block w-full rounded-md border p-2 bg-background"
             disabled={isLoading}
           />
@@ -106,7 +136,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
             id="description"
             name="description"
             rows={3}
-            placeholder="e.g., 30 minutes of exercise every morning"
+            defaultValue={habit.description || ""}
             className="mt-1 block w-full rounded-md border p-2 bg-background"
             disabled={isLoading}
           />
@@ -203,13 +233,23 @@ export function NewHabitForm({ userId }: { userId: string }) {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full rounded-md bg-primary p-2 text-white hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isLoading ? "Creating..." : "Create Habit"}
-        </button>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex-1 rounded-md bg-secondary p-2 text-foreground hover:bg-secondary/90 disabled:opacity-50"
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex-1 rounded-md bg-primary p-2 text-white hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isLoading ? "Updating..." : "Update Habit"}
+          </button>
+        </div>
       </div>
     </form>
   );

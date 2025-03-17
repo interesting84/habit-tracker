@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
-const XP_PER_COMPLETION = 10;
-const XP_PER_LEVEL = 100;
+import { XP_REWARDS } from "@/lib/constants";
 
 export async function POST(
   request: Request,
@@ -24,14 +22,59 @@ export async function POST(
 
     // Start a transaction to ensure all updates happen together
     const result = await prisma.$transaction(async (tx) => {
-      // Verify the habit belongs to the user
+      // Verify the habit belongs to the user and get its details
       const habit = await tx.habit.findUnique({
         where: { id: habitId },
+        include: {
+          completions: {
+            orderBy: { completedAt: 'desc' },
+            take: 1
+          }
+        }
       });
 
       if (!habit || habit.userId !== session.user.id) {
         throw new Error("Habit not found");
       }
+
+      // Parse the frequency JSON
+      const frequency = typeof habit.frequency === 'string' 
+        ? JSON.parse(habit.frequency as string)
+        : habit.frequency;
+
+      // Check if enough time has passed since last completion
+      const lastCompletion = habit.completions[0];
+      if (lastCompletion) {
+        const now = new Date();
+        const lastCompletedAt = new Date(lastCompletion.completedAt);
+
+        if (frequency.type === "interval") {
+          const hoursSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60 * 60);
+          const requiredHours = frequency.unit === "days" ? frequency.value * 24 : frequency.value;
+
+          if (hoursSinceLastCompletion < requiredHours) {
+            throw new Error(`You must wait ${Math.ceil(requiredHours - hoursSinceLastCompletion)} more hours before completing this habit again`);
+          }
+        } else if (frequency.type === "weekdays") {
+          // For weekdays, check if it's still the same day
+          const isNewDay = lastCompletedAt.getDate() !== now.getDate() ||
+                          lastCompletedAt.getMonth() !== now.getMonth() ||
+                          lastCompletedAt.getFullYear() !== now.getFullYear();
+
+          if (!isNewDay) {
+            throw new Error("This habit can only be completed once per day");
+          }
+
+          // Check if today is a weekday (0 = Sunday, 6 = Saturday)
+          const dayOfWeek = now.getDay();
+          if (dayOfWeek === 0 || dayOfWeek === 6) {
+            throw new Error("This habit can only be completed on weekdays");
+          }
+        }
+      }
+
+      // Calculate XP based on difficulty
+      const xpEarned = XP_REWARDS[habit.difficulty as keyof typeof XP_REWARDS] || XP_REWARDS.easy;
 
       // Get current user data
       const user = await tx.user.findUnique({
@@ -48,40 +91,34 @@ export async function POST(
         data: {
           habitId,
           userId: session.user.id,
-          xpEarned: XP_PER_COMPLETION,
+          xpEarned,
         },
       });
 
-      // Calculate new XP and level
-      const currentXp = user.xp || 0;
-      const currentLevel = user.level || 1;
-      const newXp = currentXp + XP_PER_COMPLETION;
-      const newLevel = Math.floor(newXp / XP_PER_LEVEL) + 1;
-
-      // Update user's XP and level
+      // Update user's XP
+      const newXp = user.xp + xpEarned;
       const updatedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
           xp: newXp,
-          level: newLevel,
         },
       });
 
       return {
         completion,
         newXp,
-        newLevel,
-        leveledUp: newLevel > currentLevel,
+        xpEarned,
+        leveledUp: false, // Level will be calculated on the dashboard
       };
     });
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error completing habit:", error);
-    if (error instanceof Error && error.message === "Habit not found") {
+    if (error instanceof Error) {
       return NextResponse.json(
-        { message: "Habit not found" },
-        { status: 404 }
+        { message: error.message },
+        { status: 400 }
       );
     }
     return NextResponse.json(

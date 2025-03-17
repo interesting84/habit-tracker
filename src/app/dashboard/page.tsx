@@ -9,6 +9,80 @@ import UserStats from "@/components/UserStats";
 import NewChallengeButton from "@/components/NewChallengeButton";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import DailyQuote from "@/components/DailyQuote";
+import { getLevelProgress, getXPDisplayString, calculateLevel } from "@/lib/xp";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+
+interface HabitCompletion {
+  id: string;
+  userId: string;
+  habitId: string;
+  completedAt: Date;
+  xpEarned: number;
+}
+
+interface DBHabit {
+  id: string;
+  name: string;
+  description: string | null;
+  frequency: string;
+  difficulty: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isArchived: boolean;
+  completions: HabitCompletion[];
+}
+
+interface Frequency {
+  type: "interval" | "weekdays";
+  value?: number;
+  unit?: "hours" | "days";
+}
+
+interface ParsedHabit extends Omit<DBHabit, 'frequency'> {
+  frequency: Frequency;
+}
+
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  xpReward: number;
+  difficulty: string;
+  duration: number;
+  userId: string;
+  startDate: Date;
+  endDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  aiGenerated: boolean;
+  lastCompletedAt: Date | null;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+}
+
+interface UserBadge {
+  id: string;
+  badge: Badge;
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+  level: number;
+  xp: number;
+  habits: ParsedHabit[];
+  challenges: Challenge[];
+  userBadges: UserBadge[];
+}
 
 function DashboardSkeleton() {
   return (
@@ -37,7 +111,7 @@ function DashboardSkeleton() {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user) {
     redirect("/signin");
@@ -48,24 +122,57 @@ export default async function DashboardPage() {
     include: {
       habits: {
         where: { isArchived: false },
-        include: { completions: true },
+        include: { 
+          completions: {
+            orderBy: { completedAt: 'desc' },
+            take: 1
+          }
+        },
       },
       challenges: {
-        where: { status: "active" },
+        where: { 
+          OR: [
+            { status: "active" },
+            { status: "in_progress" },
+            { status: "completed" }
+          ]
+        },
         orderBy: { createdAt: "desc" },
+        include: {
+          user: true,
+        },
       },
       userBadges: {
         include: { badge: true },
       },
     },
-  });
+  }) as User | null;
 
   if (!user) {
     redirect("/signin");
   }
 
-  const xpToNextLevel = Math.pow(user.level, 1.5) * 100;
-  const progress = (user.xp / xpToNextLevel) * 100;
+  // Parse frequency JSON for each habit
+  const parsedHabits = user.habits.map(habit => ({
+    ...habit,
+    frequency: typeof habit.frequency === 'string' 
+      ? JSON.parse(habit.frequency as string)
+      : habit.frequency
+  })) as ParsedHabit[];
+  user.habits = parsedHabits;
+
+  const calculatedLevel = calculateLevel(user.xp);
+  // Update user's level if it doesn't match their XP
+  if (calculatedLevel !== user.level) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { level: calculatedLevel }
+    });
+    user.level = calculatedLevel;
+  }
+
+  const progress = getLevelProgress(user.xp);
+  const xpDisplay = getXPDisplayString(user.xp);
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -81,7 +188,7 @@ export default async function DashboardPage() {
             <div className="mt-4 space-y-2">
               <div className="flex justify-between">
                 <span>Level {user.level}</span>
-                <span>{user.xp}/{xpToNextLevel} XP</span>
+                <span>{xpDisplay}</span>
               </div>
               <Progress value={progress} />
             </div>
@@ -100,6 +207,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="space-y-6">
+            <DailyQuote />
             <Card className="p-6">
               <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
               <div className="grid grid-cols-3 gap-4">

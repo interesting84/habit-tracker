@@ -79,6 +79,7 @@ Format the response as a JSON object with these fields:
         xpReward: parseInt(challenge.xpReward),
         status: "active",
         aiGenerated: true,
+        lastCompletedAt: null,
       },
     });
 

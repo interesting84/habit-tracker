@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,18 +10,17 @@ datasource db {
 model Account {
   id                String  @id @default(cuid())
   userId            String
-  type             String
-  provider         String
+  type              String
+  provider          String
   providerAccountId String
-  refresh_token    String? @db.Text
-  access_token     String? @db.Text
-  expires_at       Int?
-  token_type       String?
-  scope            String?
-  id_token         String? @db.Text
-  session_state    String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -41,75 +34,71 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  password      String?
-  emailVerified DateTime?
-  image         String?
-  level         Int       @default(1)
-  xp            Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts        Account[]
-  sessions        Session[]
-  habits          Habit[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  level            Int               @default(1)
+  xp               Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  password         String?
+  accounts         Account[]
+  challenges       Challenge[]
+  habits           Habit[]
   habitCompletions HabitCompletion[]
-  userBadges      UserBadge[]
-  challenges      Challenge[]
+  sessions         Session[]
+  userBadges       UserBadge[]
 }
 
 model Habit {
-  id          String    @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   description String?
-  frequency   String    // daily, weekly, monthly
+  frequency   Json
+  difficulty  String            @default("easy")
   userId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  isArchived  Boolean   @default(false)
-  
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  isArchived  Boolean           @default(false)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   completions HabitCompletion[]
 
   @@index([userId])
 }
 
 model HabitCompletion {
-  id        String   @id @default(cuid())
-  habitId   String
-  userId    String
+  id          String   @id @default(cuid())
+  habitId     String
+  userId      String
   completedAt DateTime @default(now())
-  xpEarned  Int      @default(10)
-
-  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xpEarned    Int
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([habitId])
   @@index([userId])
 }
 
 model Badge {
-  id          String    @id @default(cuid())
-  name        String    @unique
+  id          String      @id @default(cuid())
+  name        String      @unique
   description String
   imageUrl    String
-  requirement String    // JSON string containing badge requirements
-  xpBonus     Int      @default(0)
-  createdAt   DateTime  @default(now())
-
+  requirement String
+  xpBonus     Int         @default(0)
+  createdAt   DateTime    @default(now())
   userBadges  UserBadge[]
 }
 
 model UserBadge {
-  id        String   @id @default(cuid())
-  userId    String
-  badgeId   String
-  earnedAt  DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
   @@index([userId])
@@ -117,21 +106,21 @@ model UserBadge {
 }
 
 model Challenge {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  xpReward    Int
-  difficulty  String    // easy, medium, hard
-  duration    Int      // in days
-  userId      String
-  status      String    // active, completed, failed
-  startDate   DateTime  @default(now())
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  aiGenerated Boolean   @default(false)
-  
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  xpReward        Int
+  difficulty      String
+  duration        Int
+  userId          String
+  status          String
+  startDate       DateTime  @default(now())
+  endDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  aiGenerated     Boolean   @default(false)
+  lastCompletedAt DateTime?
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
