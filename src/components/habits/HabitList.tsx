@@ -49,12 +49,22 @@ function getTimeUntilNextCompletion(habit: Habit): string | null {
   const lastCompletedAt = new Date(lastCompletion.completedAt);
 
   if (habit.frequency.type === "interval") {
-    const hoursSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60 * 60);
-    const requiredHours = habit.frequency.unit === "days" ? habit.frequency.value! * 24 : habit.frequency.value!;
+    const minutesSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60);
+    const requiredMinutes = habit.frequency.unit === "days" ? habit.frequency.value! * 24 * 60 : habit.frequency.value! * 60;
 
-    if (hoursSinceLastCompletion < requiredHours) {
-      const hoursRemaining = Math.ceil(requiredHours - hoursSinceLastCompletion);
-      return `Available in ${hoursRemaining} hour${hoursRemaining === 1 ? "" : "s"}`;
+    if (minutesSinceLastCompletion < requiredMinutes) {
+      const minutesRemaining = Math.ceil(requiredMinutes - minutesSinceLastCompletion);
+      
+      if (minutesRemaining >= 60) {
+        const hours = Math.floor(minutesRemaining / 60);
+        const minutes = minutesRemaining % 60;
+        if (minutes === 0) {
+          return `Available in ${hours} hour${hours === 1 ? "" : "s"}`;
+        }
+        return `Available in ${hours}h ${minutes}m`;
+      }
+      
+      return `Available in ${minutesRemaining} minute${minutesRemaining === 1 ? "" : "s"}`;
     }
   } else if (habit.frequency.type === "weekdays") {
     // Check if it's still the same day

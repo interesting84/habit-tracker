@@ -1,5 +1,9 @@
 "use client";
 
+import { getTierForLevel, TIER_COLORS, getTierProgress } from "@/lib/tiers";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 interface User {
   id: string;
   name: string | null;
@@ -43,15 +47,52 @@ interface UserStatsProps {
 }
 
 export default function UserStats({ user }: UserStatsProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const activeHabits = user.habits.filter((h) => !h.isArchived);
   const completedChallenges = user.challenges.filter((c) => c.status === "completed");
   const streakDays = calculateStreak(user.habits);
+  const tier = getTierForLevel(user.level);
+  const tierProgress = getTierProgress(user.level, user.xp);
+
+  const handleDevBoost = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/dev/boost-xp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to boost XP");
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error boosting XP:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
       <div className="p-4 rounded-lg bg-primary/5">
-        <h3 className="text-sm font-medium text-muted-foreground">Level</h3>
-        <p className="text-2xl font-bold">{user.level}</p>
+        <h3 className="text-sm font-medium text-muted-foreground">Level & Tier</h3>
+        <p className="text-2xl font-bold">
+          {user.level}
+          <span className={`ml-2 text-lg ${TIER_COLORS[tier].text}`}>
+            {tier.charAt(0).toUpperCase() + tier.slice(1)}
+          </span>
+        </p>
+        <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+          <div
+            className={`h-1.5 rounded-full ${TIER_COLORS[tier].bg}`}
+            style={{ width: `${tierProgress}%` }}
+          />
+        </div>
       </div>
       
       <div className="p-4 rounded-lg bg-primary/5">
@@ -68,6 +109,14 @@ export default function UserStats({ user }: UserStatsProps) {
         <h3 className="text-sm font-medium text-muted-foreground">Current Streak</h3>
         <p className="text-2xl font-bold">{streakDays} days</p>
       </div>
+
+      <button
+        onClick={handleDevBoost}
+        disabled={isLoading}
+        className="absolute bottom-4 right-4 px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-colors"
+      >
+        {isLoading ? "Boosting..." : "+50 XP"}
+      </button>
     </div>
   );
 }
