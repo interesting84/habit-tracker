@@ -45,11 +45,12 @@ model User {
   updatedAt        DateTime          @updatedAt
   password         String?
   accounts         Account[]
-  challenges       Challenge[]
   habits           Habit[]
   habitCompletions HabitCompletion[]
   sessions         Session[]
   userBadges       UserBadge[]
+  following        UserFollower[]    @relation("Follower")
+  followers        UserFollower[]    @relation("Following")
 }
 
 model Habit {
@@ -105,22 +106,15 @@ model UserBadge {
   @@index([badgeId])
 }
 
-model Challenge {
-  id              String    @id @default(cuid())
-  title           String
-  description     String
-  xpReward        Int
-  difficulty      String
-  duration        Int
-  userId          String
-  status          String
-  startDate       DateTime  @default(now())
-  endDate         DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  aiGenerated     Boolean   @default(false)
-  lastCompletedAt DateTime?
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+model UserFollower {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }

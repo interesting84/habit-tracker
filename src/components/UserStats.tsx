@@ -11,7 +11,6 @@ interface User {
   level: number;
   xp: number;
   habits: Habit[];
-  challenges: Challenge[];
 }
 
 interface Habit {
@@ -25,11 +24,6 @@ interface Habit {
     completedAt: Date;
     xpEarned: number;
   }[];
-}
-
-interface Challenge {
-  id: string;
-  status: string;
 }
 
 interface Badge {
@@ -49,8 +43,9 @@ interface UserStatsProps {
 export default function UserStats({ user }: UserStatsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isBoostingBig, setIsBoostingBig] = useState(false);
   const activeHabits = user.habits.filter((h) => !h.isArchived);
-  const completedChallenges = user.challenges.filter((c) => c.status === "completed");
   const streakDays = calculateStreak(user.habits);
   const tier = getTierForLevel(user.level);
   const tierProgress = getTierProgress(user.level, user.xp);
@@ -77,46 +72,109 @@ export default function UserStats({ user }: UserStatsProps) {
     }
   };
 
+  const handleBigBoost = async () => {
+    try {
+      setIsBoostingBig(true);
+      const response = await fetch("/api/dev/boost-500-xp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to boost XP");
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error boosting XP:", error);
+    } finally {
+      setIsBoostingBig(false);
+    }
+  };
+
+  const handleResetXP = async () => {
+    if (!confirm("Are you sure you want to reset your XP and level to 1?")) {
+      return;
+    }
+    
+    try {
+      setIsResetting(true);
+      const response = await fetch("/api/dev/reset-xp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reset XP");
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error resetting XP:", error);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
-    <div className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="p-4 rounded-lg bg-primary/5">
-        <h3 className="text-sm font-medium text-muted-foreground">Level & Tier</h3>
-        <p className="text-2xl font-bold">
-          {user.level}
-          <span className={`ml-2 text-lg ${TIER_COLORS[tier].text}`}>
-            {tier.charAt(0).toUpperCase() + tier.slice(1)}
-          </span>
-        </p>
-        <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-          <div
-            className={`h-1.5 rounded-full ${TIER_COLORS[tier].bg}`}
-            style={{ width: `${tierProgress}%` }}
-          />
+    <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+      <div className="p-6 rounded-lg bg-primary/5 flex flex-col justify-between h-full">
+        <div className="flex-grow">
+          <p className="text-2xl font-bold">
+            <span className={`text-xl ${TIER_COLORS[tier].text}`}>
+              {tier.charAt(0).toUpperCase() + tier.slice(1)}
+            </span>
+            <br />
+            <span className="text-base">Level {user.level}</span>
+          </p>
         </div>
+        {tier !== 'legend' && (
+          <div className="mt-4 w-full bg-gray-200 rounded-full h-1.5">
+            <div
+              className={`h-1.5 rounded-full ${TIER_COLORS[tier].bg}`}
+              style={{ width: `${tierProgress}%` }}
+            />
+          </div>
+        )}
       </div>
       
-      <div className="p-4 rounded-lg bg-primary/5">
+      <div className="p-6 rounded-lg bg-primary/5 flex flex-col">
         <h3 className="text-sm font-medium text-muted-foreground">Active Habits</h3>
-        <p className="text-2xl font-bold">{activeHabits.length}</p>
+        <p className="text-2xl font-bold mt-1">{activeHabits.length}</p>
       </div>
       
-      <div className="p-4 rounded-lg bg-primary/5">
-        <h3 className="text-sm font-medium text-muted-foreground">Challenges Completed</h3>
-        <p className="text-2xl font-bold">{completedChallenges.length}</p>
-      </div>
-      
-      <div className="p-4 rounded-lg bg-primary/5">
+      <div className="p-6 rounded-lg bg-primary/5 flex flex-col">
         <h3 className="text-sm font-medium text-muted-foreground">Current Streak</h3>
-        <p className="text-2xl font-bold">{streakDays} days</p>
+        <p className="text-2xl font-bold mt-1">{streakDays} days</p>
       </div>
 
-      <button
-        onClick={handleDevBoost}
-        disabled={isLoading}
-        className="absolute bottom-4 right-4 px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-colors"
-      >
-        {isLoading ? "Boosting..." : "+50 XP"}
-      </button>
+      <div className="absolute bottom-4 right-4 flex gap-2">
+        <button
+          onClick={handleResetXP}
+          disabled={isResetting}
+          className="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+        >
+          {isResetting ? "Resetting..." : "Reset XP"}
+        </button>
+        <button
+          onClick={handleDevBoost}
+          disabled={isLoading}
+          className="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-colors"
+        >
+          {isLoading ? "Boosting..." : "+50 XP"}
+        </button>
+        <button
+          onClick={handleBigBoost}
+          disabled={isBoostingBig}
+          className="px-3 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded-full transition-colors"
+        >
+          {isBoostingBig ? "Boosting..." : "+500 XP"}
+        </button>
+      </div>
     </div>
   );
 }

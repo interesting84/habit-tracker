@@ -3,15 +3,15 @@ import { getServerSession } from "next-auth";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
-import ChallengeList from "@/components/ChallengeList";
 import { HabitList } from "@/components/habits/HabitList";
 import UserStats from "@/components/UserStats";
-import NewChallengeButton from "@/components/NewChallengeButton";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DailyQuote from "@/components/DailyQuote";
 import { getLevelProgress, getXPDisplayString, calculateLevel } from "@/lib/xp";
 import { authOptions } from "../api/auth/[...nextauth]/route";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 interface HabitCompletion {
   id: string;
@@ -129,19 +129,6 @@ export default async function DashboardPage() {
           }
         },
       },
-      challenges: {
-        where: { 
-          OR: [
-            { status: "active" },
-            { status: "in_progress" },
-            { status: "completed" }
-          ]
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: true,
-        },
-      },
       userBadges: {
         include: { badge: true },
       },
@@ -178,7 +165,6 @@ export default async function DashboardPage() {
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold">Dashboard</h1>
-        <NewChallengeButton userId={user.id} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -196,12 +182,16 @@ export default async function DashboardPage() {
 
           <div className="md:col-span-2 space-y-6">
             <section>
-              <h2 className="text-2xl font-semibold mb-4">Active Challenges</h2>
-              <ChallengeList challenges={user.challenges} />
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Daily Habits</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Daily Habits</h2>
+                <Link
+                  href="/habits/new"
+                  className="inline-flex items-center text-sm text-primary hover:underline"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Create Habit
+                </Link>
+              </div>
               <HabitList habits={user.habits} />
             </section>
           </div>

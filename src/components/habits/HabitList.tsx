@@ -132,16 +132,6 @@ export function HabitList({ habits }: { habits: Habit[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link
-          href="/habits/new"
-          className="inline-flex items-center text-sm text-primary hover:underline"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Create Habit
-        </Link>
-      </div>
-
       <div className="space-y-2">
         {habits.map((habit) => {
           const timeUntilNext = getTimeUntilNextCompletion(habit);

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface User {
   id: string;
@@ -34,7 +26,6 @@ interface SettingsFormProps {
 
 export default function SettingsForm({ user }: SettingsFormProps) {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -131,30 +122,6 @@ export default function SettingsForm({ user }: SettingsFormProps) {
               Save Changes
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>
-            Customize how HabitQuest looks on your device
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="theme">Theme</Label>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </CardContent>
       </Card>
 

@@ -73,23 +73,23 @@ interface TierColors {
 
 export const TIER_COLORS: Record<Tier, TierColors> = {
   newbie: {
-    text: 'text-emerald-500',
-    bg: 'bg-emerald-500',
+    text: 'text-green-500',
+    bg: 'bg-green-500',
   },
   apprentice: {
-    text: 'text-blue-500',
-    bg: 'bg-blue-500',
+    text: 'text-cyan-500',
+    bg: 'bg-cyan-500',
   },
   veteran: {
-    text: 'text-purple-500',
-    bg: 'bg-purple-500',
+    text: 'text-violet-400',
+    bg: 'bg-violet-400',
   },
   champion: {
-    text: 'text-orange-500',
-    bg: 'bg-orange-500',
+    text: 'text-yellow-500',
+    bg: 'bg-yellow-500',
   },
   legend: {
-    text: 'text-red-500',
-    bg: 'bg-red-500',
+    text: 'text-slate-300',
+    bg: 'bg-slate-300',
   },
 } as const; 
