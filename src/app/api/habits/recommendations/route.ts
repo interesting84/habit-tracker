@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a habit formation expert and personal development coach. Analyze the user's current habits and suggest new habits that would complement their existing routine and help them achieve their goals.
+          content: `You are a habit formation expert and personal development coach. Analyze the user's current habits and suggest NEW habits that would complement their existing routine and help them achieve their goals. Do not suggest habits that the user already has - each suggestion must be unique and different from their current habits.
 
 Your response must be a valid JSON object with the following structure:
 {
@@ -69,10 +69,16 @@ Your response must be a valid JSON object with the following structure:
         "value": number,
         "unit": "hours" | "days"
       },
-      "reasoning": "string"
+      "reasoning": "string (explain why this new habit complements their existing routine)"
     }
   ]
 }
+
+Rules for recommendations:
+1. Each suggestion must be a NEW habit not already in the user's current habits
+2. The habit should complement but not duplicate their existing habits
+3. Consider the user's current habit difficulty levels and suggest an appropriate mix of difficulties
+4. Provide clear reasoning that explains how the new habit fits with their existing routine
 
 IMPORTANT: Return ONLY the raw JSON. Do not wrap it in Markdown code blocks (no \`\`\`). Do not include any text before or after the JSON. The response must be parseable by JSON.parse().`
         },
