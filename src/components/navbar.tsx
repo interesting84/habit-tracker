@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, Trophy, Search } from "lucide-react"
+import { User, Trophy, Search, Brain } from "lucide-react"
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -47,6 +47,13 @@ export default function Navbar() {
               >
                 <Search className="h-4 w-4" />
                 Search Users
+              </button>
+              <button
+                onClick={() => handleNavigate("/predictions")}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Brain className="h-4 w-4" />
+                Life Predictions
               </button>
             </>
           )}
