@@ -17,12 +17,12 @@ export default function SignInForm() {
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email") as string;
+    const login = formData.get("login") as string;
     const password = formData.get("password") as string;
 
     try {
       const result = await signIn("credentials", {
-        email,
+        login,
         password,
         redirect: false,
       });
@@ -50,9 +50,8 @@ export default function SignInForm() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <Input
-            name="email"
-            type="email"
-            placeholder="Email"
+            name="login"
+            placeholder="Email or Username"
             required
             disabled={isLoading}
           />

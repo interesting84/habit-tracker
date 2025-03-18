@@ -14,6 +14,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate username format
+    if (name && !/^[a-zA-Z0-9]+$/.test(name)) {
+      return NextResponse.json(
+        { error: "Username must contain only letters and numbers, no spaces" },
+        { status: 400 }
+      );
+    }
+
+    // Check if username is already taken
+    if (name) {
+      const existingUsername = await prisma.user.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' } }
+      });
+
+      if (existingUsername) {
+        return NextResponse.json(
+          { error: "Username already taken" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },

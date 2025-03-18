@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { XP_REWARDS } from "@/lib/constants";
+import { checkAndAwardBadges } from "@/lib/badges";
 
 export async function POST(
   request: Request,
@@ -111,6 +112,9 @@ export async function POST(
         leveledUp: false, // Level will be calculated on the dashboard
       };
     });
+
+    // Check for badges after the transaction is complete
+    await checkAndAwardBadges(session.user.id);
 
     return NextResponse.json(result);
   } catch (error) {

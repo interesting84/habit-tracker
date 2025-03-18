@@ -80,7 +80,7 @@ async function HabitEditor({ habitId }: { habitId: string }) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-8 py-8">
       <div>
         <h1 className="text-3xl font-bold">Edit Habit</h1>
         <p className="text-muted-foreground">
@@ -106,10 +106,14 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default function EditHabitPage({ params }: PageProps) {
+export default async function EditHabitPage({ params }: PageProps) {
+  // Await the params object before accessing its properties
+  const resolvedParams = await params;
+  const habitId = resolvedParams.habitId;
+  
   return (
     <Suspense fallback={<EditHabitFormSkeleton />}>
-      <HabitEditor habitId={params.habitId} />
+      <HabitEditor habitId={habitId} />
     </Suspense>
   );
 } 

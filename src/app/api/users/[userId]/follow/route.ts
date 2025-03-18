@@ -5,9 +5,11 @@ import { authOptions } from "../../../auth/[...nextauth]/route";
 
 export async function POST(
   request: Request,
-  { params }: { params: { userId: string } }
+  context: { params: { userId: string } }
 ) {
   try {
+    // Await the params object before accessing its properties
+    const params = await context.params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return new NextResponse("Unauthorized", { status: 401 });

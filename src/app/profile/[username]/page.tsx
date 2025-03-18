@@ -4,10 +4,12 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { HabitList } from "@/components/habits/HabitList";
+import { HabitHeatmap } from "@/components/habits/HabitHeatmap";
 import UserStats from "@/components/UserStats";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DailyQuote from "@/components/DailyQuote";
+import { HabitRecommendations } from "@/components/habits/HabitRecommendations";
 import { getLevelProgress, getXPDisplayString, calculateLevel } from "@/lib/xp";
 import { authOptions } from "../../api/auth/[...nextauth]/route";
 import Link from "next/link";
@@ -19,7 +21,7 @@ interface Frequency {
   unit?: "hours" | "days";
 }
 
-type Habit = {
+interface Habit {
   id: string;
   name: string;
   description: string | null;
@@ -29,12 +31,23 @@ type Habit = {
     id: string;
     completedAt: Date;
   }[];
-};
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  xpBonus: number;
+}
+
+interface UserBadge {
+  id: string;
+  badge: Badge;
+}
 
 interface PageProps {
-  params: Promise<{
-    username: string;
-  }>;
+  params: Promise<{ username: string }>;
 }
 
 function ProfileSkeleton() {
@@ -71,8 +84,8 @@ export default async function ProfilePage({ params }: PageProps) {
   const profileUser = await prisma.user.findFirst({
     where: {
       OR: [
-        { email: username },
-        { name: username }
+        { email: { equals: username, mode: 'insensitive' } },
+        { name: { equals: username, mode: 'insensitive' } }
       ]
     },
     include: {
@@ -96,7 +109,7 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   // Parse frequency JSON for each habit
-  const parsedHabits = profileUser.habits.map(habit => {
+  const parsedHabits = profileUser.habits.map((habit: any) => {
     const parsed = {
       ...habit,
       frequency: typeof habit.frequency === 'string' 
@@ -152,6 +165,10 @@ export default async function ProfilePage({ params }: PageProps) {
           </Card>
 
           <div className="md:col-span-2 space-y-6">
+            <Card className="p-6">
+              <HabitHeatmap habits={safeProfileUser.habits} />
+            </Card>
+
             <section>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Daily Habits</h2>
@@ -169,24 +186,43 @@ export default async function ProfilePage({ params }: PageProps) {
             </section>
           </div>
 
-          <div className="space-y-6">
-            {isOwnProfile && <DailyQuote />}
+          <div className="md:col-span-1 space-y-6">
+            {isOwnProfile && (
+              <>
+                <DailyQuote />
+                <Card className="p-6">
+                  <HabitRecommendations />
+                </Card>
+              </>
+            )}
             <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
-              <div className="grid grid-cols-3 gap-4">
-                {safeProfileUser.userBadges.map((userBadge) => (
+              <h2 className="text-2xl font-semibold mb-6">Achievements</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {safeProfileUser.userBadges.map((userBadge: UserBadge) => (
                   <div
                     key={userBadge.id}
-                    className="flex flex-col items-center text-center"
+                    className="group relative flex flex-col items-center text-center p-4 rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <img
-                      src={userBadge.badge.imageUrl}
-                      alt={userBadge.badge.name}
-                      className="w-12 h-12 mb-2"
-                    />
-                    <span className="text-sm">{userBadge.badge.name}</span>
+                    <div className="relative">
+                      <img
+                        src={userBadge.badge.imageUrl}
+                        alt={userBadge.badge.name}
+                        className="w-16 h-16 mb-3"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 rounded-full transition-colors" />
+                    </div>
+                    <span className="font-medium">{userBadge.badge.name}</span>
+                    <span className="text-sm text-muted-foreground mt-1">{userBadge.badge.description}</span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-popover text-popover-foreground text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
+                      +{userBadge.badge.xpBonus} XP
+                    </div>
                   </div>
                 ))}
+                {safeProfileUser.userBadges.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    No achievements yet. Keep completing habits to earn badges!
+                  </div>
+                )}
               </div>
             </Card>
           </div>

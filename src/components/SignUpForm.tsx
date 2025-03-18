@@ -38,13 +38,8 @@ export default function SignUpForm() {
         throw new Error(data.error || "Failed to register");
       }
 
-      toast.success("Account created successfully!");
-
-      // Get the user's profile info
-      const userResponse = await fetch("/api/me");
-      const user = await userResponse.json();
-      
-      router.push(`/profile/${user.name || user.email}`);
+      toast.success("Account created successfully! Please sign in.");
+      router.push("/signin");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
@@ -59,10 +54,23 @@ export default function SignUpForm() {
         <div>
           <Input
             name="name"
-            placeholder="Name"
+            placeholder="Username (letters and numbers only)"
             required
             disabled={isLoading}
+            pattern="^[a-zA-Z0-9]+$"
+            title="Username must contain only letters and numbers, no spaces"
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value && !/^[a-zA-Z0-9]*$/.test(value)) {
+                e.target.setCustomValidity("Username must contain only letters and numbers, no spaces");
+              } else {
+                e.target.setCustomValidity("");
+              }
+            }}
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Username must contain only letters and numbers, no spaces
+          </p>
         </div>
         <div>
           <Input

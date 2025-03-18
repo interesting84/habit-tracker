@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, Trophy } from "lucide-react"
+import { User, Trophy, Search } from "lucide-react"
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -33,13 +33,22 @@ export default function Navbar() {
             HabitQuest
           </button>
           {session?.user && (
-            <button
-              onClick={() => handleNavigate("/leaderboard")}
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </button>
+            <>
+              <button
+                onClick={() => handleNavigate("/leaderboard")}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Trophy className="h-4 w-4" />
+                Leaderboard
+              </button>
+              <button
+                onClick={() => handleNavigate("/search")}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Search className="h-4 w-4" />
+                Search Users
+              </button>
+            </>
           )}
         </div>
 
@@ -58,6 +67,11 @@ export default function Navbar() {
                 <DropdownMenuItem asChild>
                   <Link href={`/profile/${session.user.name || session.user.email}`}>
                     Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()}>

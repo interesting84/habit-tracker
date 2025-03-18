@@ -50,7 +50,10 @@ export async function PATCH(
     }
 
     const { name, description, frequency, difficulty } = result.data;
-    const { habitId } = params;
+    
+    // Await the params object before accessing its properties
+    const resolvedParams = await params;
+    const habitId = resolvedParams.habitId;
 
     // Verify the habit belongs to the user
     const existingHabit = await prisma.habit.findUnique({
@@ -82,6 +85,51 @@ export async function PATCH(
     console.error("Error updating habit:", error);
     return NextResponse.json(
       { message: "Error updating habit" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { habitId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Await the params object before accessing its properties
+    const resolvedParams = await params;
+    const habitId = resolvedParams.habitId;
+
+    // Verify the habit belongs to the user
+    const existingHabit = await prisma.habit.findUnique({
+      where: { id: habitId },
+    });
+
+    if (!existingHabit || existingHabit.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: "Habit not found" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the habit
+    await prisma.habit.delete({
+      where: { id: habitId },
+    });
+
+    return NextResponse.json({ message: "Habit deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting habit:", error);
+    return NextResponse.json(
+      { message: "Error deleting habit" },
       { status: 500 }
     );
   }

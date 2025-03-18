@@ -53,18 +53,6 @@ export function getTierProgress(level: number, totalXP: number): number {
   const xpNeededForTier = nextTierTotalXP - currentTierTotalXP;
   const currentProgress = totalXP - currentTierTotalXP;
   
-  console.log('Tier Progress Debug:', {
-    level,
-    totalXP,
-    currentTierMinLevel,
-    nextTierLevel,
-    currentTierTotalXP,
-    nextTierTotalXP,
-    xpNeededForTier,
-    currentProgress,
-    percentage: (currentProgress / xpNeededForTier) * 100
-  });
-
   const percentage = (currentProgress / xpNeededForTier) * 100;
   return Math.min(100, Math.max(0, percentage));
 }

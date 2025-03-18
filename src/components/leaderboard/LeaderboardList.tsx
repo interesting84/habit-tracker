@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Trophy, UserPlus, UserMinus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { Trophy, UserPlus, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +19,7 @@ interface User {
   level: number;
   xp: number;
   isCurrentUser?: boolean;
+  isFollowing?: boolean;
 }
 
 interface LeaderboardListProps {
@@ -28,29 +29,7 @@ interface LeaderboardListProps {
 
 export function LeaderboardList({ users, currentUserId }: LeaderboardListProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isFollowingInProgress, setIsFollowingInProgress] = useState<{[key: string]: boolean}>({});
-
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setIsSearching(true);
-    try {
-      const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) throw new Error("Failed to search users");
-      
-      const data = await response.json();
-      setSearchResults(data.users.filter((u: User) => u.id !== currentUserId));
-    } catch (error) {
-      toast.error("Failed to search users");
-      console.error(error);
-    } finally {
-      setIsSearching(false);
-    }
-  }
 
   async function handleFollowAction(userId: string, isFollowing: boolean) {
     setIsFollowingInProgress(prev => ({ ...prev, [userId]: true }));
@@ -73,59 +52,6 @@ export function LeaderboardList({ users, currentUserId }: LeaderboardListProps) 
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Search users by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
-        />
-        <Button type="submit" disabled={isSearching}>
-          <Search className="h-4 w-4" />
-        </Button>
-      </form>
-
-      {searchResults.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Search Results</h2>
-          <div className="space-y-2">
-            {searchResults.map((user) => {
-              const tier = getTierForLevel(user.level);
-              
-              return (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-4 rounded-lg border"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={user.image ?? undefined} />
-                      <AvatarFallback>{user.name?.[0] ?? user.email?.[0] ?? '?'}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className={cn("font-medium", TIER_COLORS[tier].text)}>
-                        {user.name || user.email}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Level {user.level}</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleFollowAction(user.id, false)}
-                    disabled={isFollowingInProgress[user.id]}
-                  >
-                    <UserPlus className="h-4 w-4 mr-1" />
-                    Follow
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Rankings</h2>
         <div className="space-y-2">
@@ -156,9 +82,12 @@ export function LeaderboardList({ users, currentUserId }: LeaderboardListProps) 
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className={cn("font-medium", TIER_COLORS[tier].text)}>
+                      <Link
+                        href={`/profile/${user.name || user.email}`}
+                        className={cn("font-medium hover:underline", TIER_COLORS[tier].text)}
+                      >
                         {user.name || user.email}
-                      </p>
+                      </Link>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Level {user.level} • {user.xp.toLocaleString()} XP

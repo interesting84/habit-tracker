@@ -16,6 +16,18 @@ import {
 } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const PRESET_FREQUENCIES = {
   hourly: { type: "interval", value: 1, unit: "hours" },
@@ -44,6 +56,7 @@ export function EditHabitForm({ habit }: { habit: Habit }) {
   const { data: session } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [difficulty, setDifficulty] = useState<string>(habit.difficulty);
   const [frequencyType, setFrequencyType] = useState<"preset" | "custom">(
     habit.frequency.type === "weekdays" || 
@@ -110,6 +123,34 @@ export function EditHabitForm({ habit }: { habit: Habit }) {
       }
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function onDelete() {
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/habits/${habit.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete habit");
+      }
+
+      toast.success("Habit deleted successfully");
+      router.push(`/profile/${session?.user?.name || session?.user?.email}`);
+      router.refresh();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An error occurred while deleting the habit");
+      }
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -241,18 +282,47 @@ export function EditHabitForm({ habit }: { habit: Habit }) {
             type="button"
             onClick={() => router.back()}
             className="flex-1 rounded-md bg-secondary p-2 text-foreground hover:bg-secondary/90 disabled:opacity-50"
-            disabled={isLoading}
+            disabled={isLoading || isDeleting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isDeleting}
             className="flex-1 rounded-md bg-primary p-2 text-white hover:bg-primary/90 disabled:opacity-50"
           >
             {isLoading ? "Updating..." : "Update Habit"}
           </button>
         </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              disabled={isLoading || isDeleting}
+              className="w-full rounded-md bg-destructive p-2 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              {isDeleting ? "Deleting..." : "Delete Habit"}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your habit and all its completion history.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </form>
   );

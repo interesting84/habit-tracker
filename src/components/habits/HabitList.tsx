@@ -59,12 +59,12 @@ function getTimeUntilNextCompletion(habit: Habit): string | null {
         const hours = Math.floor(minutesRemaining / 60);
         const minutes = minutesRemaining % 60;
         if (minutes === 0) {
-          return `Available in ${hours} hour${hours === 1 ? "" : "s"}`;
+          return `in ${hours}h`;
         }
-        return `Available in ${hours}h ${minutes}m`;
+        return `in ${hours}h ${minutes}m`;
       }
       
-      return `Available in ${minutesRemaining} minute${minutesRemaining === 1 ? "" : "s"}`;
+      return `in ${minutesRemaining}m`;
     }
   } else if (habit.frequency.type === "weekdays") {
     // Check if it's still the same day
@@ -73,15 +73,15 @@ function getTimeUntilNextCompletion(habit: Habit): string | null {
                     lastCompletedAt.getFullYear() !== now.getFullYear();
 
     if (!isNewDay) {
-      return "Available tomorrow";
+      return "tomorrow";
     }
 
     // Check if it's a weekend
     const dayOfWeek = now.getDay();
     if (dayOfWeek === 0) {
-      return "Available Monday";
+      return "on Monday";
     } else if (dayOfWeek === 6) {
-      return "Available Monday";
+      return "on Monday";
     }
   }
 
@@ -91,6 +91,41 @@ function getTimeUntilNextCompletion(habit: Habit): string | null {
 export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isViewOnly?: boolean }) {
   const router = useRouter();
   const [completingHabit, setCompletingHabit] = useState<string | null>(null);
+
+  // Sort habits by availability
+  const sortedHabits = [...habits].sort((a, b) => {
+    const timeA = getTimeUntilNextCompletion(a);
+    const timeB = getTimeUntilNextCompletion(b);
+    
+    // If both are available (null), keep original order
+    if (!timeA && !timeB) return 0;
+    // Available habits (null) come first
+    if (!timeA) return -1;
+    if (!timeB) return 1;
+    
+    // For weekday habits
+    if (timeA === "tomorrow" && timeB !== "tomorrow") return 1;
+    if (timeB === "tomorrow" && timeA !== "tomorrow") return -1;
+    if (timeA === "on Monday" && timeB !== "on Monday") return 1;
+    if (timeB === "on Monday" && timeA !== "on Monday") return -1;
+    
+    // For interval habits, compare the time values
+    const getMinutes = (time: string) => {
+      const match = time.match(/in (\d+)h(?: (\d+)m)?/);
+      if (match) {
+        const hours = parseInt(match[1]) || 0;
+        const minutes = parseInt(match[2]) || 0;
+        return hours * 60 + minutes;
+      }
+      const minutesMatch = time.match(/in (\d+)m/);
+      if (minutesMatch) {
+        return parseInt(minutesMatch[1]);
+      }
+      return Infinity;
+    };
+    
+    return getMinutes(timeA) - getMinutes(timeB);
+  });
 
   async function completeHabit(habitId: string, habitName: string) {
     if (isViewOnly) return;
@@ -136,7 +171,7 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
 
   return (
     <div className="space-y-4">
-      {habits.map((habit) => {
+      {sortedHabits.map((habit) => {
         const timeUntilNext = getTimeUntilNextCompletion(habit);
         const isCompleted = timeUntilNext !== null;
         const isLoading = completingHabit === habit.id;
@@ -189,7 +224,7 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
               </div>
               {isCompleted && (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Next completion available {timeUntilNext}
+                  Available {timeUntilNext}
                 </p>
               )}
             </div>

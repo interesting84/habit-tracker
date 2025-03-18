@@ -2,29 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
 
 interface Quote {
   content: string;
   author: string;
+  userId: string | null;
 }
 
 export default function DailyQuote() {
+  const { data: session } = useSession();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchQuote = async () => {
       try {
-        // Get today's date as a string to use as a cache key
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date in user's local timezone
+        const now = new Date();
+        const today = now.toLocaleDateString('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+        const userId = session?.user?.id;
         
-        // Check if we have a cached quote for today
-        const cachedQuote = localStorage.getItem(`daily-quote-${today}`);
-        
-        if (cachedQuote) {
-          setQuote(JSON.parse(cachedQuote));
+        if (!userId) {
           setIsLoading(false);
           return;
+        }
+
+        // Check if we have a cached quote for today and this user
+        const cacheKey = `daily-quote-${userId}-${today}`;
+        const cachedQuote = localStorage.getItem(cacheKey);
+        
+        if (cachedQuote) {
+          const parsed = JSON.parse(cachedQuote);
+          // Verify the cached quote belongs to the current user
+          if (parsed.userId === userId) {
+            setQuote(parsed);
+            setIsLoading(false);
+            return;
+          }
         }
 
         // Fetch a new quote from our API endpoint
@@ -36,18 +51,22 @@ export default function DailyQuote() {
         const data = await response.json();
         const newQuote = {
           content: data.content,
-          author: data.author
+          author: data.author,
+          userId: data.userId
         };
         
-        // Cache the quote with today's date
-        localStorage.setItem(`daily-quote-${today}`, JSON.stringify(newQuote));
+        // Only cache if we got a valid user-specific quote
+        if (newQuote.userId === userId) {
+          localStorage.setItem(cacheKey, JSON.stringify(newQuote));
+        }
         setQuote(newQuote);
       } catch (error) {
         console.error("Failed to fetch quote:", error);
         // Set a fallback quote if everything fails
         setQuote({
           content: "The only way to do great work is to love what you do.",
-          author: "Steve Jobs"
+          author: "Steve Jobs",
+          userId: null
         });
       } finally {
         setIsLoading(false);
@@ -55,7 +74,7 @@ export default function DailyQuote() {
     };
 
     fetchQuote();
-  }, []);
+  }, [session]); // Re-run if session changes
 
   if (isLoading) {
     return (
@@ -68,7 +87,7 @@ export default function DailyQuote() {
     );
   }
 
-  if (!quote) {
+  if (!quote || !session?.user) {
     return null;
   }
 

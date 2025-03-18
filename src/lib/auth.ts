@@ -29,14 +29,12 @@ export const authOptions: NextAuthOptions = {
         }) as PrismaUser;
 
         if (!user) {
-          console.log("User not found");
           return null;
         }
 
         try {
           const isValid = await compare(credentials.password, user.password || '');
           if (!isValid) {
-            console.log("Invalid password");
             return null;
           }
 
