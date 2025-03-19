@@ -150,11 +150,10 @@
     --radius: 0.5rem;
 
     /* Tier colors in RGB format */
-    --newbie-rgb: 34, 197, 94;
-    --apprentice-rgb: 6, 182, 212;
-    --veteran-rgb: 167, 139, 250;
-    --champion-rgb: 234, 179, 8;
-    --legend-rgb: 203, 213, 225;
+    --bronze-rgb: 194, 65, 12;
+    --silver-rgb: 148, 163, 184;
+    --gold-rgb: 234, 179, 8;
+    --platinum-rgb: 224, 242, 254;
   }
 
   .dark {

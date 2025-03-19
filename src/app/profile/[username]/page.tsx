@@ -93,8 +93,7 @@ export default async function ProfilePage({ params }: PageProps) {
         where: { isArchived: false },
         include: { 
           completions: {
-            orderBy: { completedAt: 'desc' },
-            take: 1
+            orderBy: { completedAt: 'desc' }
           }
         },
       },

@@ -49,82 +49,9 @@ interface UserStatsProps {
 
 export default function UserStats({ user, isViewOnly = false }: UserStatsProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const [isBoostingBig, setIsBoostingBig] = useState(false);
   const activeHabits = user.habits.filter((h) => !h.isArchived);
   const tier = getTierForLevel(user.level);
   const tierProgress = getTierProgress(user.level, user.xp);
-
-  const handleDevBoost = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/dev/boost-xp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to boost XP");
-      }
-
-      router.refresh();
-    } catch (error) {
-      console.error("Error boosting XP:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBigBoost = async () => {
-    try {
-      setIsBoostingBig(true);
-      const response = await fetch("/api/dev/boost-500-xp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to boost XP");
-      }
-
-      router.refresh();
-    } catch (error) {
-      console.error("Error boosting XP:", error);
-    } finally {
-      setIsBoostingBig(false);
-    }
-  };
-
-  const handleResetXP = async () => {
-    if (!confirm("Are you sure you want to reset your XP and level to 1?")) {
-      return;
-    }
-    
-    try {
-      setIsResetting(true);
-      const response = await fetch("/api/dev/reset-xp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to reset XP");
-      }
-
-      router.refresh();
-    } catch (error) {
-      console.error("Error resetting XP:", error);
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -143,7 +70,7 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
           </p>
           <p className="text-lg">Level {user.level}</p>
           <div className="space-y-1">
-            {tier !== 'legend' && (
+            {tier !== 'platinum' && (
               <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                 <div 
                   className={cn("h-full rounded-full", TIER_COLORS[tier].bg)}
@@ -152,7 +79,7 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
               </div>
             )}
             <p className="text-xs text-muted-foreground text-right">
-              {tier !== 'legend' && `${Math.round(tierProgress)}% to next tier`}
+              {tier !== 'platinum' && `${Math.round(tierProgress)}% to next tier`}
             </p>
           </div>
         </div>
@@ -165,34 +92,6 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
         <h3 className="text-sm font-medium">Followers</h3>
         <p className="text-2xl font-bold">{user.followers?.length || 0}</p>
       </div>
-      {!isViewOnly && process.env.NODE_ENV === "development" && (
-        <div className="col-span-full flex gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDevBoost}
-            disabled={isLoading}
-          >
-            {isLoading ? "Boosting..." : "Dev: Boost XP"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBigBoost}
-            disabled={isBoostingBig}
-          >
-            {isBoostingBig ? "Boosting..." : "Dev: Big Boost"}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleResetXP}
-            disabled={isResetting}
-          >
-            {isResetting ? "Resetting..." : "Reset XP"}
-          </Button>
-        </div>
-      )}
     </div>
   );
 } 

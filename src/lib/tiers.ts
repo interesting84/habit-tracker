@@ -1,28 +1,25 @@
 import { getCurrentLevelXP, getXPRequiredForLevel } from "./xp";
 
-export type Tier = 'newbie' | 'apprentice' | 'veteran' | 'champion' | 'legend';
+export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
 
 /**
  * Tier level ranges:
- * - Newbie: [1, 3)
- * - Apprentice: [3, 10)
- * - Veteran: [10, 20)
- * - Champion: [20, 30)
- * - Legend: [30, ∞)
+ * - Bronze: [1, 3)
+ * - Silver: [3, 10)
+ * - Gold: [10, 20)
+ * - Platinum: [20, ∞)
  */
 export function getTierForLevel(level: number): Tier {
-  if (level < 3) return 'newbie';
-  if (level < 10) return 'apprentice';
-  if (level < 20) return 'veteran';
-  if (level < 30) return 'champion';
-  return 'legend';
+  if (level < 3) return 'bronze';
+  if (level < 10) return 'silver';
+  if (level < 20) return 'gold';
+  return 'platinum';
 }
 
 export function getNextTierLevel(currentLevel: number): number | null {
   if (currentLevel < 3) return 3;
   if (currentLevel < 10) return 10;
   if (currentLevel < 20) return 20;
-  if (currentLevel < 30) return 30;
   return null; // Already at highest tier
 }
 
@@ -42,8 +39,7 @@ export function getTierProgress(level: number, totalXP: number): number {
   if (level < 3) currentTierMinLevel = 1;
   else if (level < 10) currentTierMinLevel = 3;
   else if (level < 20) currentTierMinLevel = 10;
-  else if (level < 30) currentTierMinLevel = 20;
-  else currentTierMinLevel = 30;
+  else currentTierMinLevel = 20;
 
   // Calculate total XP needed for tier boundaries
   const nextTierTotalXP = getTotalXPForLevel(nextTierLevel);
@@ -63,24 +59,20 @@ interface TierColors {
 }
 
 export const TIER_COLORS: Record<Tier, TierColors> = {
-  newbie: {
-    text: 'text-green-500',
-    bg: 'bg-green-500',
+  bronze: {
+    text: 'text-orange-700',
+    bg: 'bg-orange-700',
   },
-  apprentice: {
-    text: 'text-cyan-500',
-    bg: 'bg-cyan-500',
+  silver: {
+    text: 'text-slate-400',
+    bg: 'bg-slate-400',
   },
-  veteran: {
-    text: 'text-violet-400',
-    bg: 'bg-violet-400',
-  },
-  champion: {
+  gold: {
     text: 'text-yellow-500',
     bg: 'bg-yellow-500',
   },
-  legend: {
-    text: 'text-slate-300',
-    bg: 'bg-slate-300',
+  platinum: {
+    text: 'text-cyan-100',
+    bg: 'bg-cyan-100',
   },
 } as const; 
