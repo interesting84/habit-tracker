@@ -21,6 +21,15 @@ export async function POST(
       );
     }
 
+    // Use current UTC time for completion
+    const completionTime = new Date();
+    console.log('Server: Creating completion with time:', {
+      raw: completionTime,
+      iso: completionTime.toISOString(),
+      utc: completionTime.toUTCString(),
+      local: completionTime.toString(),
+    });
+
     // Start a transaction to ensure all updates happen together
     const result = await prisma.$transaction(async (tx) => {
       // Verify the habit belongs to the user and get its details
@@ -46,28 +55,27 @@ export async function POST(
       // Check if enough time has passed since last completion
       const lastCompletion = habit.completions[0];
       if (lastCompletion) {
-        const now = new Date();
         const lastCompletedAt = new Date(lastCompletion.completedAt);
 
         if (frequency.type === "interval") {
-          const hoursSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60 * 60);
+          const hoursSinceLastCompletion = (completionTime.getTime() - lastCompletedAt.getTime()) / (1000 * 60 * 60);
           const requiredHours = frequency.unit === "days" ? frequency.value * 24 : frequency.value;
 
           if (hoursSinceLastCompletion < requiredHours) {
             throw new Error(`You must wait ${Math.ceil(requiredHours - hoursSinceLastCompletion)} more hours before completing this habit again`);
           }
         } else if (frequency.type === "weekdays") {
-          // For weekdays, check if it's still the same day
-          const isNewDay = lastCompletedAt.getDate() !== now.getDate() ||
-                          lastCompletedAt.getMonth() !== now.getMonth() ||
-                          lastCompletedAt.getFullYear() !== now.getFullYear();
+          // For weekdays, check if it's still the same day (in UTC)
+          const isNewDay = lastCompletedAt.getUTCDate() !== completionTime.getUTCDate() ||
+                          lastCompletedAt.getUTCMonth() !== completionTime.getUTCMonth() ||
+                          lastCompletedAt.getUTCFullYear() !== completionTime.getUTCFullYear();
 
           if (!isNewDay) {
             throw new Error("This habit can only be completed once per day");
           }
 
           // Check if today is a weekday (0 = Sunday, 6 = Saturday)
-          const dayOfWeek = now.getDay();
+          const dayOfWeek = completionTime.getUTCDay();
           if (dayOfWeek === 0 || dayOfWeek === 6) {
             throw new Error("This habit can only be completed on weekdays");
           }
@@ -87,11 +95,12 @@ export async function POST(
         throw new Error("User not found");
       }
 
-      // Create the completion record
+      // Create the completion record with UTC time
       const completion = await tx.habitCompletion.create({
         data: {
           habitId,
           userId: session.user.id,
+          completedAt: completionTime,
           xpEarned,
         },
       });

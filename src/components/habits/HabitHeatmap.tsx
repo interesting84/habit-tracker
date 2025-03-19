@@ -98,9 +98,12 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
   }, [totalDays, startWeekIndex]);
 
   const completionsByDate = useMemo(() => {
+    console.log('Heatmap: Calculating completions for dates');
+    
     const dates = new Array(totalDays).fill(0).map((_, i) => {
       const date = new Date(calculateStartDate);
       date.setDate(date.getDate() + i);
+      // Set to start of day in local timezone
       date.setHours(0, 0, 0, 0);
       return date;
     });
@@ -109,24 +112,46 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
     
     // Initialize all dates with 0 completions
     dates.forEach(date => {
-      completions.set(date.toISOString().split('T')[0], 0);
+      // Format date in local timezone
+      const dateStr = date.toLocaleDateString('en-CA');
+      console.log('Heatmap: Adding date to map:', { date, dateStr });
+      completions.set(dateStr, 0);
     });
 
     // Count completions for each date
     habits.forEach(habit => {
       habit.completions.forEach(completion => {
+        // Parse the UTC date and convert to local
         const date = new Date(completion.completedAt);
-        const dateKey = date.toISOString().split('T')[0];
-        if (completions.has(dateKey)) {
-          completions.set(dateKey, (completions.get(dateKey) || 0) + 1);
+        // Format in local timezone
+        const dateStr = date.toLocaleDateString('en-CA');
+        
+        console.log('Heatmap: Processing completion:', {
+          completedAt: completion.completedAt,
+          parsedDate: date,
+          localString: date.toString(),
+          dateStr
+        });
+        
+        if (completions.has(dateStr)) {
+          const newCount = (completions.get(dateStr) || 0) + 1;
+          completions.set(dateStr, newCount);
+          console.log('Heatmap: Updated count for', dateStr, 'to', newCount);
+        } else {
+          console.log('Heatmap: Date string not found in completions map:', dateStr);
         }
       });
     });
 
-    return Array.from(completions.entries()).map(([date, count]) => ({
-      date,
-      count,
-    }));
+    const result = Array.from(completions.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({
+        date,
+        count,
+      }));
+    
+    console.log('Heatmap: Final completions by date:', result);
+    return result;
   }, [habits, totalDays, calculateStartDate]);
 
   const maxCompletions = Math.max(...completionsByDate.map(d => d.count), 1);
@@ -148,7 +173,9 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
     let week: (DateCompletion | null)[] = [];
     
     completionsByDate.forEach(({ date, count }, index) => {
-      const dayOfWeek = new Date(date).getDay();
+      // Create date object in local timezone
+      const localDate = new Date(date + 'T00:00:00');
+      const dayOfWeek = localDate.getDay();
       
       // Fill in empty days at the start of the first week
       if (index === 0 && dayOfWeek !== 0) {
@@ -195,7 +222,8 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
     let lastWeekIndex = -1;
     
     completionsByDate.forEach(({ date }, index) => {
-      const dateObj = new Date(date);
+      // Create date object in local timezone
+      const dateObj = new Date(date + 'T00:00:00');
       const month = dateObj.toLocaleString('default', { month: 'short' });
       const year = dateObj.getFullYear();
       const weekIndex = Math.floor(index / 7);
@@ -320,7 +348,7 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
                           style={{ width: SQUARE_SIZE, height: SQUARE_SIZE }}
                         />
                         <div className="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-popover text-popover-foreground text-xs rounded-md px-2 py-1 z-10 shadow-md">
-                          {new Date(day.date).toLocaleDateString()} - {day.count} completion{day.count !== 1 ? 's' : ''}
+                          {new Date(day.date + 'T00:00:00').toLocaleDateString()} - {day.count} completion{day.count !== 1 ? 's' : ''}
                         </div>
                       </>
                     ) : (

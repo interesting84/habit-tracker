@@ -115,8 +115,7 @@ export function LifePredictions() {
           Life Predictions
         </h2>
         <p className="text-muted-foreground">
-          Tell us about yourself, and our AI will predict how your life might
-          change over the next 2 years based on your current habits.
+          Who would you become if you stuck to your habits for the next 2 years?
         </p>
       </div>
 
@@ -183,13 +182,13 @@ export function LifePredictions() {
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="challenges">Current Challenges</Label>
+            <Label htmlFor="challenges">Current State</Label>
             <Textarea
               id="challenges"
               name="challenges"
               value={traits.challenges}
               onChange={handleInputChange}
-              placeholder="What challenges are you currently facing?"
+              placeholder="Where are you in your life right now?"
               required
             />
           </div>
@@ -219,26 +218,12 @@ export function LifePredictions() {
           <Card className="p-6">
             <h3 className="text-2xl font-semibold flex items-center gap-2 mb-4">
               <Trophy className="w-6 h-6 text-yellow-500" />
-              Your Transformation Journey
+              Your future self in 2 years says hi!
             </h3>
             
             <div className="space-y-6">
               <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
                 <p className="text-lg font-medium text-primary">{predictions.summary.message}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-3">Your Power Statement</h4>
-                <p className="text-lg italic">{predictions.summary.powerStatement}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-3">Key Milestones Ahead</h4>
-                <ul className="list-disc list-inside space-y-2">
-                  {predictions.summary.keyMilestones.map((milestone, index) => (
-                    <li key={index} className="text-primary-foreground">{milestone}</li>
-                  ))}
-                </ul>
               </div>
 
               <div>

@@ -89,9 +89,7 @@ Your response must be a valid JSON object with the following structure:
     }
   ],
   "summary": {
-    "message": "string (direct, powerful message about the user's potential transformation)",
-    "keyMilestones": ["string"] (list of 3-5 specific achievements that will define their journey),
-    "powerStatement": "string (one-line statement about the compound effect of their habits)",
+    "message": "string (message from the user's future self, in first person as if they are speaking directly to the user)",
     "criticalHabits": ["string"] (list of 2-3 current habits that will be most transformative)
   }
 }
