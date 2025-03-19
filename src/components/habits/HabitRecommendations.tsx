@@ -102,27 +102,36 @@ export function HabitRecommendations() {
           <h2 className="text-2xl font-semibold">AI Suggestions</h2>
           <Sparkles className="w-5 h-5 text-yellow-500" />
         </div>
-        <Button
-          onClick={fetchRecommendations}
-          disabled={isLoading}
-          variant="outline"
-          size="sm"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            "Get Suggestions"
-          )}
-        </Button>
+        {!isLoading && (
+          <Button
+            onClick={fetchRecommendations}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+          >
+            Get Suggestions
+          </Button>
+        )}
       </div>
+
+      {isLoading && (
+        <Card className="p-4">
+          <div className="flex items-center gap-4">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <div>
+              <p className="font-medium">Generating Personalized Recommendations</p>
+              <p className="text-sm text-muted-foreground">
+                Our AI is analyzing your habits and crafting tailored suggestions. This may take a moment...
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {recommendations.length > 0 ? (
         <div className="space-y-4">
           {recommendations.map((recommendation) => (
-            <Card key={recommendation.name} className="overflow-hidden">
+            <Card key={recommendation.name} className="overflow-hidden transform transition-transform duration-200 hover:scale-[1.02]">
               <CardHeader className="p-4">
                 <div className="flex items-start justify-between">
                   <div>

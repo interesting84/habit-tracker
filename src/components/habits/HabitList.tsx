@@ -179,7 +179,7 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
         return (
           <div
             key={habit.id}
-            className="flex overflow-hidden rounded-lg border"
+            className="flex overflow-hidden rounded-lg border transform transition-transform duration-200 hover:scale-[1.02]"
           >
             <div className={cn("w-1 flex-shrink-0", difficultyColors[habit.difficulty as keyof typeof difficultyColors])} />
             <div className={cn(

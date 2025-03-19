@@ -148,6 +148,13 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Tier colors in RGB format */
+    --newbie-rgb: 34, 197, 94;
+    --apprentice-rgb: 6, 182, 212;
+    --veteran-rgb: 167, 139, 250;
+    --champion-rgb: 234, 179, 8;
+    --legend-rgb: 203, 213, 225;
   }
 
   .dark {
@@ -180,4 +187,41 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--shine-color, rgba(255, 255, 255, 0.15)) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%) skewX(-15deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shine-effect:hover::after {
+  animation: shine 0.75s ease;
+  opacity: 1;
 }

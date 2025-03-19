@@ -128,7 +128,15 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+      <div 
+        className={cn(
+          "flex flex-col gap-2 p-4 rounded-lg bg-muted/50 shine-effect transform transition-transform duration-200 hover:scale-[1.02]",
+          "relative overflow-hidden"
+        )}
+        style={{ 
+          '--shine-color': `rgba(var(--${tier}-rgb), 0.2)`
+        } as React.CSSProperties}
+      >
         <div className="space-y-2">
           <p className={cn("text-2xl font-bold capitalize", TIER_COLORS[tier].text)}>
             {tier}
@@ -149,11 +157,11 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50 transform transition-transform duration-200 hover:scale-[1.02]">
         <h3 className="text-sm font-medium">Active Habits</h3>
         <p className="text-2xl font-bold">{activeHabits.length}</p>
       </div>
-      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50">
+      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50 transform transition-transform duration-200 hover:scale-[1.02]">
         <h3 className="text-sm font-medium">Current Streak</h3>
         <p className="text-2xl font-bold">{streakDays} days</p>
       </div>

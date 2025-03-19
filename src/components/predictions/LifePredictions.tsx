@@ -195,17 +195,24 @@ export function LifePredictions() {
           </div>
         </div>
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating Predictions...
-            </>
-          ) : (
-            "Generate Life Predictions"
-          )}
+        <Button type="submit" disabled={isLoading} className="w-full" style={{ display: isLoading ? 'none' : 'flex' }}>
+          <span>Generate Life Predictions</span>
         </Button>
       </form>
+
+      {isLoading && (
+        <Card className="p-6 mt-8">
+          <div className="flex items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div>
+              <h3 className="font-semibold mb-1">Generating Your Life Predictions</h3>
+              <p className="text-sm text-muted-foreground">
+                Our AI is carefully analyzing your traits and potential future paths. This may take a minute or two...
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {predictions && (
         <div className="space-y-8 mt-8">
