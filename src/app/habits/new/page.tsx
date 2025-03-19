@@ -26,7 +26,7 @@ export default async function NewHabitPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-8 pt-8">
       <div>
         <h1 className="text-3xl font-bold">Create a New Habit</h1>
         <p className="text-muted-foreground">

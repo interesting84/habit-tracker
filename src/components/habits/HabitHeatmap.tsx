@@ -69,7 +69,7 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
   // Calculate total days to show
   const totalDays = useMemo(() => {
     const now = new Date();
-    return Math.ceil((now.getTime() - calculateStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.ceil((now.getTime() - calculateStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }, [calculateStartDate]);
 
   useEffect(() => {

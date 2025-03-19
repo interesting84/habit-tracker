@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -41,61 +41,26 @@ function formatFrequency(frequency: Frequency): string {
   return frequency.value === 1 ? "Hourly" : `Every ${frequency.value} hours`;
 }
 
-function getTimeUntilNextCompletion(habit: Habit): string | null {
-  const lastCompletion = habit.completions[0];
-  if (!lastCompletion) return null;
-
-  const now = new Date();
-  const lastCompletedAt = new Date(lastCompletion.completedAt);
-
-  if (habit.frequency.type === "interval") {
-    const minutesSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60);
-    const requiredMinutes = habit.frequency.unit === "days" ? habit.frequency.value! * 24 * 60 : habit.frequency.value! * 60;
-
-    if (minutesSinceLastCompletion < requiredMinutes) {
-      const minutesRemaining = Math.ceil(requiredMinutes - minutesSinceLastCompletion);
-      
-      if (minutesRemaining >= 60) {
-        const hours = Math.floor(minutesRemaining / 60);
-        const minutes = minutesRemaining % 60;
-        if (minutes === 0) {
-          return `in ${hours}h`;
-        }
-        return `in ${hours}h ${minutes}m`;
-      }
-      
-      return `in ${minutesRemaining}m`;
-    }
-  } else if (habit.frequency.type === "weekdays") {
-    // Check if it's still the same day
-    const isNewDay = lastCompletedAt.getDate() !== now.getDate() ||
-                    lastCompletedAt.getMonth() !== now.getMonth() ||
-                    lastCompletedAt.getFullYear() !== now.getFullYear();
-
-    if (!isNewDay) {
-      return "tomorrow";
-    }
-
-    // Check if it's a weekend
-    const dayOfWeek = now.getDay();
-    if (dayOfWeek === 0) {
-      return "on Monday";
-    } else if (dayOfWeek === 6) {
-      return "on Monday";
-    }
-  }
-
-  return null;
-}
-
 export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isViewOnly?: boolean }) {
   const router = useRouter();
   const [completingHabit, setCompletingHabit] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  // Update current time on client side only
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Sort habits by availability
   const sortedHabits = [...habits].sort((a, b) => {
-    const timeA = getTimeUntilNextCompletion(a);
-    const timeB = getTimeUntilNextCompletion(b);
+    if (!currentTime) return 0; // Don't sort until we have client-side time
+    const timeA = getTimeUntilNextCompletion(a, currentTime);
+    const timeB = getTimeUntilNextCompletion(b, currentTime);
     
     // If both are available (null), keep original order
     if (!timeA && !timeB) return 0;
@@ -172,7 +137,7 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
   return (
     <div className="space-y-4">
       {sortedHabits.map((habit) => {
-        const timeUntilNext = getTimeUntilNextCompletion(habit);
+        const timeUntilNext = currentTime ? getTimeUntilNextCompletion(habit, currentTime) : null;
         const isCompleted = timeUntilNext !== null;
         const isLoading = completingHabit === habit.id;
 
@@ -233,4 +198,50 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
       })}
     </div>
   );
+}
+
+function getTimeUntilNextCompletion(habit: Habit, now: Date): string | null {
+  const lastCompletion = habit.completions[0];
+  if (!lastCompletion) return null;
+
+  const lastCompletedAt = new Date(lastCompletion.completedAt);
+
+  if (habit.frequency.type === "interval") {
+    const minutesSinceLastCompletion = (now.getTime() - lastCompletedAt.getTime()) / (1000 * 60);
+    const requiredMinutes = habit.frequency.unit === "days" ? habit.frequency.value! * 24 * 60 : habit.frequency.value! * 60;
+
+    if (minutesSinceLastCompletion < requiredMinutes) {
+      const minutesRemaining = Math.ceil(requiredMinutes - minutesSinceLastCompletion);
+      
+      if (minutesRemaining >= 60) {
+        const hours = Math.floor(minutesRemaining / 60);
+        const minutes = minutesRemaining % 60;
+        if (minutes === 0) {
+          return `in ${hours}h`;
+        }
+        return `in ${hours}h ${minutes}m`;
+      }
+      
+      return `in ${minutesRemaining}m`;
+    }
+  } else if (habit.frequency.type === "weekdays") {
+    // Check if it's still the same day
+    const isNewDay = lastCompletedAt.getDate() !== now.getDate() ||
+                    lastCompletedAt.getMonth() !== now.getMonth() ||
+                    lastCompletedAt.getFullYear() !== now.getFullYear();
+
+    if (!isNewDay) {
+      return "tomorrow";
+    }
+
+    // Check if it's a weekend
+    const dayOfWeek = now.getDay();
+    if (dayOfWeek === 0) {
+      return "on Monday";
+    } else if (dayOfWeek === 6) {
+      return "on Monday";
+    }
+  }
+
+  return null;
 } 
