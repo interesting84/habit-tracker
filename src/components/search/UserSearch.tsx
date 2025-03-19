@@ -78,7 +78,7 @@ export function UserSearch({ currentUserId }: UserSearchProps) {
       <form onSubmit={handleSearch} className="flex gap-2">
         <Input
           type="text"
-          placeholder="Search users by name or email..."
+          placeholder="Search users by username..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1"
@@ -107,10 +107,10 @@ export function UserSearch({ currentUserId }: UserSearchProps) {
                     </Avatar>
                     <div>
                       <Link
-                        href={`/profile/${user.name || user.email}`}
+                        href={`/profile/${user.name}`}
                         className={cn("font-medium hover:underline", TIER_COLORS[tier].text)}
                       >
-                        {user.name || user.email}
+                        {user.name}
                       </Link>
                       <p className="text-sm text-muted-foreground">Level {user.level}</p>
                     </div>

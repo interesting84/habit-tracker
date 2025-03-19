@@ -29,10 +29,7 @@ export async function GET(request: Request) {
     // Get users matching the search query
     const users = await prisma.user.findMany({
       where: {
-        OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-        ],
+        name: { contains: query, mode: "insensitive" },
         NOT: {
           email: session.user.email,
         },

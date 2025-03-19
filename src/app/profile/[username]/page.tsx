@@ -101,6 +101,8 @@ export default async function ProfilePage({ params }: PageProps) {
       userBadges: {
         include: { badge: true },
       },
+      followers: true,
+      following: true,
     },
   });
 

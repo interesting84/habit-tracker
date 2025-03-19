@@ -16,6 +16,8 @@ interface User {
   level: number;
   xp: number;
   habits: Habit[];
+  followers: any[];
+  following: any[];
 }
 
 interface Habit {
@@ -127,7 +129,7 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div 
         className={cn(
           "flex flex-col gap-2 p-4 rounded-lg bg-muted/50 shine-effect transform transition-transform duration-200 hover:scale-[1.02]",
@@ -164,6 +166,10 @@ export default function UserStats({ user, isViewOnly = false }: UserStatsProps) 
       <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50 transform transition-transform duration-200 hover:scale-[1.02]">
         <h3 className="text-sm font-medium">Current Streak</h3>
         <p className="text-2xl font-bold">{streakDays} days</p>
+      </div>
+      <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted/50 transform transition-transform duration-200 hover:scale-[1.02]">
+        <h3 className="text-sm font-medium">Followers</h3>
+        <p className="text-2xl font-bold">{user.followers?.length || 0}</p>
       </div>
       {!isViewOnly && process.env.NODE_ENV === "development" && (
         <div className="col-span-full flex gap-4">
