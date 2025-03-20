@@ -1,18 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { authOptions } from "../../../auth/[...nextauth]/options";
 
-export async function POST(
-  request: Request,
-  context: { params: { userId: string } }
-) {
+export async function POST(req: NextRequest) {
   try {
-    // Await the params object before accessing its properties
-    const params = await context.params;
+    // Extract userId from the URL
+    const urlParts = req.url.split('/');
+    const userId = urlParts[urlParts.length - 2]; // [userId]/follow -> get userId
+    
     const session = await getServerSession(authOptions);
+    
     if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { message: "You must be logged in to follow a user" },
+        { status: 401 }
+      );
     }
 
     const currentUser = await prisma.user.findUnique({
@@ -23,11 +26,9 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const targetUserId = params.userId;
-
     // Check if user exists
     const targetUser = await prisma.user.findUnique({
-      where: { id: targetUserId },
+      where: { id: userId },
     });
 
     if (!targetUser) {
@@ -39,26 +40,29 @@ export async function POST(
       where: {
         followerId_followingId: {
           followerId: currentUser.id,
-          followingId: targetUserId,
+          followingId: userId,
         },
       },
     });
 
     if (existingFollow) {
-      return new NextResponse("Already following this user", { status: 400 });
+      return NextResponse.json(
+        { message: "Already following this user" },
+        { status: 400 }
+      );
     }
 
     // Create follow relationship
     await prisma.userFollower.create({
       data: {
         followerId: currentUser.id,
-        followingId: targetUserId,
+        followingId: userId,
       },
     });
 
-    return new NextResponse("Successfully followed user", { status: 200 });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error following user:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("[FOLLOW_USER]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 } 

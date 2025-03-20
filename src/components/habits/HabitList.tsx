@@ -110,7 +110,7 @@ export function HabitList({ habits, isViewOnly = false }: { habits: Habit[], isV
 
       toast.success(`Completed ${habitName}!`);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to complete habit");
     } finally {
       setCompletingHabit(null);

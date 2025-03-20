@@ -33,7 +33,7 @@ export function SignInForm() {
 
       router.push("/dashboard");
       router.refresh();
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -86,7 +86,7 @@ export function SignInForm() {
         </div>
       </form>
       <div className="text-center text-sm">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/register" className="text-primary hover:underline">
           Register
         </Link>

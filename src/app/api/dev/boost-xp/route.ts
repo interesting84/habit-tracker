@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     // Add 50 XP
     const newXp = user.xp + 50;
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: session.user.id },
       data: { xp: newXp },
     });

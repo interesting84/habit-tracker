@@ -38,7 +38,7 @@ export default function SignInForm() {
       
       router.push(`/profile/${user.name || user.email}`);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
@@ -78,7 +78,7 @@ export default function SignInForm() {
         </Button>
       </form>
       <div className="text-center text-sm">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/register" className="text-primary hover:underline">
           Sign up
         </Link>

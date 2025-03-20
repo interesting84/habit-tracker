@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Trophy, UserPlus, UserMinus } from "lucide-react";
+import { Trophy, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getTierForLevel, TIER_COLORS } from "@/lib/tiers";
 import { cn } from "@/lib/utils";
-import type { Tier } from "@/lib/tiers";
 
 interface User {
   id: string;

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../api/auth/[...nextauth]/route";
+import { authOptions } from "../../api/auth/[...nextauth]/options";
 import { NewHabitForm } from "@/components/habits/NewHabitForm";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";

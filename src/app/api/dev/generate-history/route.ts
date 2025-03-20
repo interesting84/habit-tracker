@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/[...nextauth]/options";
 import { XP_REWARDS } from "@/lib/constants";
 
 export async function POST() {
@@ -29,7 +29,14 @@ export async function POST() {
     startDate.setFullYear(now.getFullYear() - 1); // Go back 1 year
     startDate.setHours(0, 0, 0, 0); // Start at beginning of the day
     
-    const completions = [];
+    type CompletionData = {
+      habitId: string;
+      userId: string;
+      completedAt: Date;
+      xpEarned: number;
+    };
+    
+    const completions: CompletionData[] = [];
     
     for (const habit of habits) {
       // For each day in the past year

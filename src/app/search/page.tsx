@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "../api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Suspense } from "react";

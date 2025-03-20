@@ -1,4 +1,4 @@
-import { getCurrentLevelXP, getXPRequiredForLevel } from "./xp";
+import { getXPRequiredForLevel } from "./xp";
 
 export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
 

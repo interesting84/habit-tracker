@@ -54,7 +54,7 @@ export default function SettingsForm({ user }: SettingsFormProps) {
 
       toast.success("Settings updated successfully");
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update settings");
     } finally {
       setIsLoading(false);
@@ -79,7 +79,7 @@ export default function SettingsForm({ user }: SettingsFormProps) {
 
       toast.success("Account deleted successfully");
       router.push("/");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete account");
     } finally {
       setIsLoading(false);

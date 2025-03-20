@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../api/auth/[...nextauth]/route";
+import { authOptions } from "../../../api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { EditHabitForm } from "@/components/habits/EditHabitForm";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Prisma, Habit } from "@prisma/client";
 
 interface Frequency {
   type: "interval" | "weekdays";
@@ -42,52 +41,45 @@ async function HabitEditor({ habitId }: { habitId: string }) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/signin");
+    redirect("/login");
   }
 
   const habit = await prisma.habit.findUnique({
-    where: { id: habitId },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      frequency: true,
-      difficulty: true,
-      userId: true,
-      createdAt: true,
-      updatedAt: true,
-      isArchived: true,
+    where: {
+      id: habitId,
     },
-  }) as unknown as (Omit<HabitWithParsedFrequency, 'frequency'> & { frequency: string });
+  });
 
-  if (!habit || habit.userId !== session.user.id) {
-    redirect("/dashboard");
+  if (!habit) {
+    return <div>Habit not found</div>;
   }
 
-  // Parse the frequency JSON string back to an object
+  if (habit.userId !== session.user.id) {
+    return <div>You do not have permission to edit this habit</div>;
+  }
+
+  // Parse the frequency which is stored as a string in the database
+  let parsedFrequency: Frequency;
+  try {
+    parsedFrequency = typeof habit.frequency === 'string'
+      ? JSON.parse(habit.frequency as string)
+      : habit.frequency;
+  } catch (error) {
+    console.error('Error parsing frequency:', error);
+    parsedFrequency = { type: 'interval', value: 1, unit: 'days' };
+  }
+
   const parsedHabit: HabitWithParsedFrequency = {
-    id: habit.id,
-    name: habit.name,
-    description: habit.description,
-    frequency: typeof habit.frequency === 'string' 
-      ? JSON.parse(habit.frequency) 
-      : habit.frequency as Frequency,
-    difficulty: habit.difficulty,
-    userId: habit.userId,
-    createdAt: habit.createdAt,
-    updatedAt: habit.updatedAt,
-    isArchived: habit.isArchived,
+    ...habit,
+    frequency: parsedFrequency,
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 py-8">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Habit</h1>
-        <p className="text-muted-foreground">
-          Update your habit details
-        </p>
+    <div className="mx-auto max-w-4xl p-4 md:p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Edit Habit</h1>
+        <p className="text-slate-500">Update your habit details below</p>
       </div>
-
       <Suspense fallback={<EditHabitFormSkeleton />}>
         <EditHabitForm habit={parsedHabit} />
       </Suspense>
@@ -95,19 +87,18 @@ async function HabitEditor({ habitId }: { habitId: string }) {
   );
 }
 
-type PageProps = {
-  params: { habitId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+interface PageProps {
+  params: Promise<{ habitId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata() {
   return {
     title: 'Edit Habit',
   };
 }
 
 export default async function EditHabitPage({ params }: PageProps) {
-  // Await the params object before accessing its properties
   const resolvedParams = await params;
   const habitId = resolvedParams.habitId;
   

@@ -1,25 +1,23 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { authOptions } from "../../../auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { XP_REWARDS } from "@/lib/constants";
 import { checkAndAwardBadges } from "@/lib/badges";
 
 export async function POST(
-  request: Request,
-  context: { params: Promise<{ habitId: string }> }
+  request: Request
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const params = await context.params;
-    const habitId = params.habitId;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    // Extract habitId from the URL
+    const urlParts = new URL(request.url).pathname.split('/');
+    const habitId = urlParts[urlParts.length - 2]; // Get the habitId from the URL
 
     // Use current UTC time for completion
     const completionTime = new Date();
@@ -107,7 +105,7 @@ export async function POST(
 
       // Update user's XP
       const newXp = user.xp + xpEarned;
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { id: session.user.id },
         data: {
           xp: newXp,

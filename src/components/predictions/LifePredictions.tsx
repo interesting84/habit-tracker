@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +59,6 @@ const formatRelativeDate = (dateStr: string): string => {
 };
 
 export function LifePredictions() {
-  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [predictions, setPredictions] = useState<PredictionResponse | null>(null);
   const [traits, setTraits] = useState({

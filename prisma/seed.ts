@@ -1,35 +1,42 @@
 const { PrismaClient } = require('@prisma/client')
 
-const prisma = new PrismaClient()
+const seedClient = new PrismaClient()
 
 async function main() {
   // Create achievement badges
-  await prisma.badge.createMany({
+  await seedClient.badge.createMany({
     data: [
       {
         name: 'First Step',
         description: 'Complete your first habit',
-        imageUrl: '/badges/first-step.svg',
-        requirement: 'Complete 1 habit',
-        xpBonus: 50
+        image: '/badges/first-step.svg',
+        requirement: 'FIRST_COMPLETE',
+        requirementValue: 1
       },
       {
-        name: 'Weekly Warrior',
+        name: 'Habit Master',
+        description: 'Complete a habit 10 times',
+        image: '/badges/habit-master.svg',
+        requirement: 'COMPLETE_COUNT',
+        requirementValue: 10
+      },
+      {
+        name: 'Consistency King',
         description: 'Complete habits for 7 consecutive days',
-        imageUrl: '/badges/weekly-warrior.svg',
-        requirement: 'Complete habits for 7 days in a row',
-        xpBonus: 100
+        image: '/badges/consistency-king.svg',
+        requirement: 'STREAK_DAYS',
+        requirementValue: 7
       }
-    ],
-    skipDuplicates: true
+    ]
   })
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
+  .then(async () => {
+    await seedClient.$disconnect()
   })
-  .finally(async () => {
-    await prisma.$disconnect()
+  .catch(async (e) => {
+    console.error(e)
+    await seedClient.$disconnect()
+    process.exit(1)
   }) 

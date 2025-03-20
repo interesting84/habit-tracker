@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { Mistral } from "@mistralai/mistralai";
-import type { Habit } from "@prisma/client";
+import type { Habit, HabitCompletion } from "@prisma/client";
 import type { ChatCompletionRequest } from "@mistralai/mistralai/models/components";
 
 const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     }
 
     // Prepare habit data for AI analysis
-    const habitData = user.habits.map((habit: Habit & { completions: any[] }) => ({
+    const habitData = user.habits.map((habit: Habit & { completions: HabitCompletion[] }) => ({
       name: habit.name,
       description: habit.description,
       difficulty: habit.difficulty,

@@ -1,12 +1,7 @@
 "use client";
 
 import { getTierForLevel, TIER_COLORS, getTierProgress } from "@/lib/tiers";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { getLevelProgress } from "@/lib/xp";
 
 interface User {
   id: string;
@@ -15,8 +10,8 @@ interface User {
   level: number;
   xp: number;
   habits: Habit[];
-  followers: any[];
-  following: any[];
+  followers: { id: string }[];
+  following: { id: string }[];
 }
 
 interface Habit {
@@ -32,23 +27,12 @@ interface Habit {
   }[];
 }
 
-interface Badge {
-  name: string;
-  imageUrl: string;
-}
-
-interface UserBadge {
-  id: string;
-  badge: Badge;
-}
-
 interface UserStatsProps {
   user: User;
   isViewOnly?: boolean;
 }
 
-export default function UserStats({ user, isViewOnly = false }: UserStatsProps) {
-  const router = useRouter();
+export default function UserStats({ user }: UserStatsProps) {
   const activeHabits = user.habits.filter((h) => !h.isArchived);
   const tier = getTierForLevel(user.level);
   const tierProgress = getTierProgress(user.level, user.xp);

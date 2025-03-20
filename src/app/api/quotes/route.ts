@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "../auth/[...nextauth]/options";
 
 export async function GET() {
   try {
@@ -26,7 +26,7 @@ export async function GET() {
       author: data[0].a,
       userId: session.user.id // Include the user ID in response
     });
-  } catch (error) {
+  } catch {
     // Return a fallback quote if the API fails
     return NextResponse.json({
       content: "The only way to do great work is to love what you do.",

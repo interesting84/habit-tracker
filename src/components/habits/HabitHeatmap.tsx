@@ -17,7 +17,6 @@ interface Habit {
 
 interface HabitHeatmapProps {
   habits: Habit[];
-  days?: number;
 }
 
 interface DateCompletion {
@@ -31,7 +30,7 @@ interface MonthLabel {
   weekIndex: number;
 }
 
-export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
+export function HabitHeatmap({ habits }: HabitHeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleWeeks, setVisibleWeeks] = useState(15);
   
@@ -95,7 +94,7 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
     }
 
     return () => resizeObserver.disconnect();
-  }, [totalDays, startWeekIndex]);
+  }, [totalDays, startWeekIndex, CELL_SIZE, DAY_LABELS_WIDTH, CONTAINER_PADDING]);
 
   const completionsByDate = useMemo(() => {
     console.log('Heatmap: Calculating completions for dates');
@@ -217,8 +216,6 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
     if (weeks.length === 0) return [];
     
     const months: MonthLabel[] = [];
-    let currentMonth = '';
-    let currentYear = 0;
     let lastWeekIndex = -1;
     
     completionsByDate.forEach(({ date }, index) => {
@@ -242,8 +239,6 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
             date,
             weekIndex
           });
-          currentMonth = month;
-          currentYear = year;
           lastWeekIndex = weekIndex;
         }
       }
@@ -256,7 +251,7 @@ export function HabitHeatmap({ habits, days = 365 }: HabitHeatmapProps) {
         ...m,
         weekIndex: m.weekIndex - startWeekIndex
       }));
-  }, [completionsByDate, startWeekIndex, visibleWeeks]);
+  }, [completionsByDate, startWeekIndex, visibleWeeks, weeks.length]);
 
   const handlePrevious = () => {
     setStartWeekIndex(prev => Math.max(0, prev - visibleWeeks));

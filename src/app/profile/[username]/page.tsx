@@ -11,26 +11,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import DailyQuote from "@/components/DailyQuote";
 import { HabitRecommendations } from "@/components/habits/HabitRecommendations";
 import { getLevelProgress, getXPDisplayString, calculateLevel } from "@/lib/xp";
-import { authOptions } from "../../api/auth/[...nextauth]/route";
+import { authOptions } from "../../api/auth/[...nextauth]/options";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import type { Habit as PrismaHabit } from "@prisma/client";
+import Image from "next/image";
 
 interface Frequency {
   type: "interval" | "weekdays";
   value?: number;
   unit?: "hours" | "days";
-}
-
-interface Habit {
-  id: string;
-  name: string;
-  description: string | null;
-  frequency: Frequency;
-  difficulty: string;
-  completions: {
-    id: string;
-    completedAt: Date;
-  }[];
 }
 
 interface Badge {
@@ -93,7 +83,14 @@ export default async function ProfilePage({ params }: PageProps) {
         where: { isArchived: false },
         include: { 
           completions: {
-            orderBy: { completedAt: 'desc' }
+            orderBy: { completedAt: 'desc' },
+            select: {
+              id: true,
+              userId: true,
+              habitId: true,
+              completedAt: true,
+              xpEarned: true
+            }
           }
         },
       },
@@ -110,7 +107,15 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   // Parse frequency JSON for each habit
-  const parsedHabits = profileUser.habits.map((habit: any) => {
+  const parsedHabits = profileUser.habits.map((habit: PrismaHabit & { 
+    completions: { 
+      id: string; 
+      userId: string; 
+      habitId: string; 
+      completedAt: Date; 
+      xpEarned: number; 
+    }[] 
+  }) => {
     const parsed = {
       ...habit,
       frequency: typeof habit.frequency === 'string' 
@@ -148,7 +153,7 @@ export default async function ProfilePage({ params }: PageProps) {
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold">
-          {safeProfileUser.name || safeProfileUser.email}'s Profile
+          {safeProfileUser.name || safeProfileUser.email}&apos;s Profile
         </h1>
       </div>
 
@@ -205,10 +210,12 @@ export default async function ProfilePage({ params }: PageProps) {
                     className="group relative flex flex-col items-center text-center p-4 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="relative">
-                      <img
+                      <Image
                         src={userBadge.badge.imageUrl}
                         alt={userBadge.badge.name}
-                        className="w-16 h-16 mb-3"
+                        width={64}
+                        height={64}
+                        className="mb-3"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 rounded-full transition-colors" />
                     </div>

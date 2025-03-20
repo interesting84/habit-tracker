@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -24,10 +24,7 @@ const updateHabitSchema = z.object({
   difficulty: z.enum(["easy", "medium", "hard"]),
 });
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { habitId: string } }
-) {
+export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -38,7 +35,11 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
+    // Extract habitId from the URL
+    const urlParts = req.url.split('/');
+    const habitId = urlParts[urlParts.length - 1];
+
+    const body = await req.json();
     
     // Validate request body
     const result = updateHabitSchema.safeParse(body);
@@ -50,10 +51,6 @@ export async function PATCH(
     }
 
     const { name, description, frequency, difficulty } = result.data;
-    
-    // Await the params object before accessing its properties
-    const resolvedParams = await params;
-    const habitId = resolvedParams.habitId;
 
     // Verify the habit belongs to the user
     const existingHabit = await prisma.habit.findUnique({
@@ -90,10 +87,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { habitId: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -104,9 +98,9 @@ export async function DELETE(
       );
     }
 
-    // Await the params object before accessing its properties
-    const resolvedParams = await params;
-    const habitId = resolvedParams.habitId;
+    // Extract habitId from the URL
+    const urlParts = req.url.split('/');
+    const habitId = urlParts[urlParts.length - 1];
 
     // Verify the habit belongs to the user
     const existingHabit = await prisma.habit.findUnique({
